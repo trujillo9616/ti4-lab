@@ -3,7 +3,11 @@ import { IconHexagons } from "@tabler/icons-react";
 import { ConfigSection } from "~/components/ConfigSection";
 import { useDraftSetup } from "../store";
 
-export function SlicesConfigurationSection() {
+type Props = {
+  maxSlices: number;
+};
+
+export function SlicesConfigurationSection({ maxSlices }: Props) {
   const slices = useDraftSetup((state) => state.slices);
   const playerCount = useDraftSetup((state) => state.player.players.length);
 
@@ -13,7 +17,7 @@ export function SlicesConfigurationSection() {
         <Group justify="space-between" wrap="nowrap" gap="xs">
           <Box style={{ flex: 1 }}>
             <Text size="sm" fw={500}>Slices in Pool</Text>
-            <Text size="xs" c="dimmed">Available slices for the draft</Text>
+            <Text size="xs" c="dimmed">Available slices for the draft, up to {maxSlices}</Text>
           </Box>
           <Group gap={2}>
             <Button
@@ -32,7 +36,7 @@ export function SlicesConfigurationSection() {
               size="compact-xs"
               variant="subtle"
               color="gray"
-              disabled={slices.numSlices >= 9}
+              disabled={slices.numSlices >= maxSlices}
               onMouseDown={() => slices.setNumSlices(slices.numSlices + 1)}
             >
               +

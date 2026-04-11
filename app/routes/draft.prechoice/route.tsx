@@ -11,7 +11,7 @@ import {
   Text,
 } from "@mantine/core";
 import { DiscordData, Draft, DraftSettings } from "~/types";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DemoMap } from "~/components/DemoMap";
 import { SectionTitle } from "~/components/Section";
 import { PlayerInputSection } from "../draft.new/components/PlayerInputSection";
@@ -52,6 +52,7 @@ import { MapStyleSelector } from "./components/MapStyleSelector";
 import { SeededMapBanner } from "./components/SeededMapBanner";
 import { decodeSeededMapData } from "~/mapgen/utils/mapToDraft";
 import { DraftFormatDescription } from "./components/DraftFormatDescription";
+import { getMaxAvailableSlices } from "./utils";
 import buttonClasses from "~/ui/buttons.module.css";
 import classes from "./prechoice.module.css";
 
@@ -77,6 +78,7 @@ export default function DraftPrechoice() {
   const content = useDraftSetup((state) => state.content);
   const format = useDraftSetup((state) => state.format);
   const texas = useDraftSetup((state) => state.texas);
+  const faction = useDraftSetup((state) => state.faction);
 
   const [sliceSettings, setSliceSettings] = useState<
     Record<SliceSettingsFormatType, SliceGenerationSettings>
@@ -144,6 +146,33 @@ export default function DraftPrechoice() {
   }, [mapSlicesString, selectedDraftType, player, setPlayers, map, slices]);
 
   const mapType = hoveredMapType ?? map.selectedMapType;
+  const playerCount = player.players.length;
+
+  const tileGameSets = useMemo(() => {
+    if (draftMode === "twilightFalls") {
+      return ["base", "pok", "te"] as const;
+    }
+
+    return content.getTileGameSets();
+  }, [content, draftMode]);
+
+  const maxSlices = useMemo(
+    () =>
+      Math.max(
+        playerCount,
+        getMaxAvailableSlices(
+          map.selectedMapType,
+          [...tileGameSets],
+          !!faction.minorFactionsMode,
+        ),
+      ),
+    [
+      faction.minorFactionsMode,
+      map.selectedMapType,
+      playerCount,
+      tileGameSets,
+    ],
+  );
 
   const { buildDraftSettings } = useDraftSettingsBuilder(sliceSettings);
   const { navigateToDraft } = useDraftNavigation(discordData);
@@ -161,6 +190,11 @@ export default function DraftPrechoice() {
       setSearchParams(newParams, { replace: true });
     }
     map.setSelectedMapType(mapType);
+  };
+
+  const handleDraftModeChange = (value: string | null) => {
+    if (!value) return;
+    setDraftMode(value as "base" | "twilightFalls" | "texasStyle");
   };
 
   const handleContinue = () => {
@@ -413,9 +447,7 @@ export default function DraftPrechoice() {
             <SectionTitle title="Configuration" />
             <Tabs
               value={draftMode}
-              onChange={(value) =>
-                setDraftMode(value as "base" | "twilightFalls" | "texasStyle")
-              }
+              onChange={handleDraftModeChange}
               variant="pills"
             >
               <Tabs.List mb="md">
@@ -425,7 +457,7 @@ export default function DraftPrechoice() {
               </Tabs.List>
 
               <Tabs.Panel value="base">
-                <DraftConfigurationPanel />
+                <DraftConfigurationPanel maxSlices={maxSlices} />
               </Tabs.Panel>
 
               <Tabs.Panel value="twilightFalls">
@@ -443,7 +475,7 @@ export default function DraftPrechoice() {
                   </Alert>
 
                   <div className={classes.twoColGrid}>
-                    <SlicesConfigurationSection />
+                    <SlicesConfigurationSection maxSlices={maxSlices} />
                     <ReferenceCardPacksConfigurationSection />
                   </div>
                   <div className={classes.twoColGrid}>

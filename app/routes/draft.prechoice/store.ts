@@ -18,7 +18,7 @@ import {
   type FactionConstraints,
   type FactionNotification,
 } from "./validation";
-import { filterFactionList } from "./utils";
+import { filterFactionList, getMaxAvailableSlices } from "./utils";
 
 type ContentFlags = {
   // Base game
@@ -168,6 +168,14 @@ type DraftSetupStore = {
 
 export const useDraftSetup = create<DraftSetupStore>()(
   immer((set, get) => {
+    const getCurrentTileGameSets = (state: DraftSetupStore): GameSet[] => {
+      if (state.draftMode === "twilightFalls") {
+        return ["base", "pok", "te"];
+      }
+
+      return get().content.getTileGameSets();
+    };
+
     const applyFactionValidation = () => {
       set((state) => {
         const playerCount = state.player.players.length;
@@ -208,7 +216,7 @@ export const useDraftSetup = create<DraftSetupStore>()(
       draftMode: "base" as DraftMode,
 
       setDraftMode: (mode: DraftMode) =>
-        set((state) => {
+        setAndValidate((state) => {
           state.draftMode = mode;
 
           // When switching to Twilight's Fall, set reference card packs to player count
@@ -262,6 +270,19 @@ export const useDraftSetup = create<DraftSetupStore>()(
               newMapType === "heisen" || newMapType === "heisen8p";
           }
 
+          const maxSlices = Math.max(
+            playerCount,
+            getMaxAvailableSlices(
+              state.map.selectedMapType,
+              getCurrentTileGameSets(state),
+              !!state.faction.minorFactionsMode,
+            ),
+          );
+
+          if (state.slices.numSlices > maxSlices) {
+            state.slices.numSlices = maxSlices;
+          }
+
           const currentFactionPool = getFactionPool(
             get().content.getFactionGameSets(),
           );
@@ -312,7 +333,7 @@ export const useDraftSetup = create<DraftSetupStore>()(
           }),
 
         setPlayers: (players: Player[]) =>
-          set((state) => {
+          setAndValidate((state) => {
             state.player.players = players;
           }),
       },

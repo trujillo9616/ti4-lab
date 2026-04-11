@@ -1,9 +1,12 @@
 import { Badge, Box, Button, Group, SimpleGrid, Stack, Text } from "@mantine/core";
 import {
   IconAlienFilled,
+  IconDice,
   IconHexagons,
   IconSettings,
+  IconUser,
   IconUsers,
+  IconUsersGroup,
 } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import { ConfigSection } from "~/components/ConfigSection";
@@ -14,12 +17,15 @@ import { FactionId, FactionStratification } from "~/types";
 import { useDraftSetup } from "../store";
 import { isMiltyVariant, isMiltyEqVariant } from "../maps";
 import { HoverRadioCard } from "~/components/HoverRadioCard";
-import { IconDice, IconUser, IconUsersGroup } from "@tabler/icons-react";
 import { NumberStepper } from "~/components/NumberStepper";
 import { ContentPacksSection } from "./ContentPacksSection";
 import classes from "../prechoice.module.css";
 
-export function DraftConfigurationPanel() {
+type Props = {
+  maxSlices: number;
+};
+
+export function DraftConfigurationPanel({ maxSlices }: Props) {
   const faction = useDraftSetup((state) => state.faction);
   const slices = useDraftSetup((state) => state.slices);
   const format = useDraftSetup((state) => state.format);
@@ -128,6 +134,7 @@ export function DraftConfigurationPanel() {
               <Group justify="space-between" wrap="nowrap" gap="xs">
                 <Box style={{ flex: 1 }}>
                   <Text size="sm" fw={500}>In Pool</Text>
+                  <Text size="xs" c="dimmed">Up to {maxSlices} with current tiles</Text>
                 </Box>
                 <Group gap={2}>
                   <Button
@@ -146,7 +153,7 @@ export function DraftConfigurationPanel() {
                     size="compact-xs"
                     variant="subtle"
                     color="gray"
-                    disabled={slices.numSlices >= 9}
+                    disabled={slices.numSlices >= maxSlices}
                     onMouseDown={() => slices.setNumSlices(slices.numSlices + 1)}
                   >
                     +

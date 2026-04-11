@@ -3,8 +3,10 @@ import type {
   SliceGenerationSettings,
   SliceSettingsFormatType,
 } from "~/components/SliceSettingsModal";
-import type { FactionId } from "~/types";
+import type { FactionId, GameSet, SystemId } from "~/types";
 import { draftConfig } from "~/draft";
+import { getSystemPool } from "~/utils/system";
+import { systemData } from "~/data/systemData";
 
 export type SliceValueRange = {
   minSliceValue: number | undefined;
@@ -38,7 +40,7 @@ export const calculateSliceValueRange = (
 };
 
 // Determine which settings format to use based on map type
-function getSettingsFormatType(
+export function getSettingsFormatType(
   mapType: ChoosableDraftType,
 ): SliceSettingsFormatType | null {
   if (mapType.startsWith("miltyeq")) return "miltyeq";
@@ -90,3 +92,78 @@ export const buildSliceGenerationConfig = (
     hasMinorFactions,
   };
 };
+
+type SliceTileRequirements = {
+  total: number;
+  red: number;
+  blue: number;
+};
+
+/**
+ * Heuristic slice cap rules.
+ *
+ * We intentionally keep this cheap and deterministic:
+ * 1. Every map type has a fixed number of tiles per slice.
+ * 2. Every map family also has a minimum red/blue mix that its generators aim for.
+ * 3. The largest legal pool is the smallest of:
+ *    - how many full slices the total tile count can fill
+ *    - how many slices the red tile pool can support
+ *    - how many slices the blue tile pool can support
+ *
+ * This is only a pool-size heuristic for the UI cap. It does not try to model
+ * wormholes, legendaries, value constraints, or generator randomness.
+ */
+function getMinimumTileRequirementsPerSlice(
+  mapType: ChoosableDraftType,
+  hasMinorFactions: boolean,
+): SliceTileRequirements {
+  const total = draftConfig[mapType].numSystemsInSlice;
+
+  if (mapType.startsWith("miltyeq")) {
+    return hasMinorFactions
+      ? { total, red: 2, blue: 2 }
+      : { total, red: 1, blue: 3 };
+  }
+
+  if (mapType.startsWith("milty")) {
+    return { total, red: 2, blue: 3 };
+  }
+
+  return { total, red: 1, blue: 2 };
+}
+
+function countTileColors(systemPool: SystemId[]) {
+  const red = systemPool.filter((id) => systemData[id].type === "RED").length;
+  return {
+    total: systemPool.length,
+    red,
+    blue: systemPool.length - red,
+  };
+}
+
+function getSliceCandidateUpperBound(
+  mapType: ChoosableDraftType,
+  systemPool: SystemId[],
+  hasMinorFactions: boolean,
+) {
+  const pool = countTileColors(systemPool);
+  const requirements = getMinimumTileRequirementsPerSlice(
+    mapType,
+    hasMinorFactions,
+  );
+
+  return Math.min(
+    Math.floor(pool.total / requirements.total),
+    Math.floor(pool.red / requirements.red),
+    Math.floor(pool.blue / requirements.blue),
+  );
+}
+
+export function getMaxAvailableSlices(
+  mapType: ChoosableDraftType,
+  tileGameSets: GameSet[],
+  hasMinorFactions: boolean,
+) {
+  const systemPool = getSystemPool(tileGameSets);
+  return getSliceCandidateUpperBound(mapType, systemPool, hasMinorFactions);
+}
