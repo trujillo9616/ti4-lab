@@ -1,4 +1,4 @@
-import { Map as TiMap, SystemId, Anomaly } from "~/types";
+import { Map as TiMap, SystemId, Anomaly, System } from "~/types";
 import { systemData } from "~/data/systemData";
 import type {
   SliceValueBreakdown,
@@ -9,7 +9,6 @@ import {
   buildHexGraphWithExclusions,
   getGraphDistance,
   getSimpleHexDistance,
-  getAllNeighbors,
   HexGraph,
 } from "~/utils/hexDistance";
 
@@ -65,6 +64,27 @@ export type TileContribution = {
   actualValue: number;      // Value after division
   equidistantCount: number; // Number of homes sharing (1 = full, 2+ = shared)
   percentage: number;       // 1 / equidistantCount (1.0, 0.5, 0.33, etc.)
+};
+
+type EvaluatedSystemContribution = {
+  included: boolean;
+  optimalResources: number;
+  optimalInfluence: number;
+  optimalValue: number;
+  modifiers: SliceValueModifier[];
+  modifierValue: number;
+  fullValue: number;
+  actualValue: number;
+  equidistantPenalty: number;
+};
+
+type EvaluatedSystemValue = {
+  optimalResources: number;
+  optimalInfluence: number;
+  optimalValue: number;
+  modifiers: SliceValueModifier[];
+  modifierValue: number;
+  fullValue: number;
 };
 
 export const DEFAULT_MODIFIERS: SliceValueModifiers = {
@@ -146,42 +166,178 @@ function getSystemValue(
   const system = systemData[systemId];
   if (!system) return 0;
 
-  let value = 0;
+  return evaluateSystemValue(system, modifiers).fullValue;
+}
 
-  // Use max of planet resources or influence (optimal resource type)
-  system.planets.forEach((planet) => {
-    value += Math.max(planet.resources, planet.influence);
+/**
+ * Evaluate the raw value of a single system before any slice-specific sharing rules.
+ *
+ * This is the "system math" only:
+ * - choose each planet's optimal spend via max(resources, influence)
+ * - add tech/legendary/trade-station/anomaly modifiers
+ * - keep the modifier rows needed by the popup
+ *
+ * It does NOT decide whether a home system can claim this tile. That map-level
+ * ownership logic happens in `evaluateSystemContribution`.
+ */
+function evaluateSystemValue(
+  system: System,
+  modifiers: SliceValueModifiers = DEFAULT_MODIFIERS,
+): EvaluatedSystemValue {
+  let optimalResources = 0;
+  let optimalInfluence = 0;
+  let optimalValue = 0;
+  let modifierValue = 0;
+  const systemModifiers: SliceValueModifier[] = [];
+  let techSkipCount = 0;
+  let techSkipValue = 0;
 
-    // Add bonus for tech specialties (0.5 per tech skip)
+  for (const planet of system.planets) {
+    optimalValue += Math.max(planet.resources, planet.influence);
+
+    // For the popup we still keep the chosen optimal contribution split into
+    // its resource or influence bucket.
+    if (planet.resources >= planet.influence) {
+      optimalResources += planet.resources;
+    } else {
+      optimalInfluence += planet.influence;
+    }
+
     if (planet.tech && planet.tech.length > 0) {
-      value += planet.tech.length * modifiers.techValue;
+      techSkipCount += planet.tech.length;
+      techSkipValue += planet.tech.length * modifiers.techValue;
     }
 
-    // Add bonus for legendary planets (different values per legendary)
     if (planet.legendary) {
+      let legValue = modifiers.otherLegendaryValue;
+      const legLabel = planet.name || "Legendary";
       if (planet.name === "Hope's End") {
-        value += modifiers.hopesEndValue;
+        legValue = modifiers.hopesEndValue;
       } else if (planet.name === "Emelpar") {
-        value += modifiers.emelparValue;
+        legValue = modifiers.emelparValue;
       } else if (planet.name === "Industrex") {
-        value += modifiers.industrexValue;
-      } else {
-        value += modifiers.otherLegendaryValue;
+        legValue = modifiers.industrexValue;
       }
+
+      systemModifiers.push({
+        label: legLabel,
+        value: legValue,
+      });
+      modifierValue += legValue;
     }
 
-    // Add bonus for trade stations
     if (planet.tradeStation) {
-      value += modifiers.tradeStationValue;
+      systemModifiers.push({
+        label: "Trade Station",
+        value: modifiers.tradeStationValue,
+      });
+      modifierValue += modifiers.tradeStationValue;
     }
-  });
-
-  // Add bonus for entropic scar (system-level anomaly)
-  if (system.anomalies.includes("ENTROPIC_SCAR")) {
-    value += modifiers.entropicScarValue;
   }
 
-  return value;
+  if (techSkipCount > 0) {
+    systemModifiers.unshift({
+      label: "Tech",
+      value: techSkipValue,
+      count: techSkipCount,
+    });
+    modifierValue += techSkipValue;
+  }
+
+  if (system.anomalies.includes("ENTROPIC_SCAR")) {
+    systemModifiers.push({
+      label: "Entropic Scar",
+      value: modifiers.entropicScarValue,
+    });
+    modifierValue += modifiers.entropicScarValue;
+  }
+
+  return {
+    optimalResources,
+    optimalInfluence,
+    optimalValue,
+    modifiers: systemModifiers,
+    modifierValue,
+    fullValue: optimalValue + modifierValue,
+  };
+}
+
+/**
+ * Evaluate how much one map tile contributes to one home system's slice.
+ *
+ * `evaluateSystemValue` handles the intrinsic value of the underlying system.
+ * This wrapper adds the map-level rules:
+ * - is the tile within distance 2 of this home?
+ * - is another home closer?
+ * - if multiple homes are equally close, how is the value split?
+ *
+ * That is why this function accepts the full `map` plus `homeIdx` / `homeIndices`,
+ * while slice-based UI helpers can work from a precomputed array of systems.
+ */
+function evaluateSystemContribution(
+  map: TiMap,
+  tileIdx: number,
+  homeIdx: number,
+  homeIndices: number[],
+  modifiers: SliceValueModifiers = DEFAULT_MODIFIERS,
+  graph?: HexGraph,
+): EvaluatedSystemContribution {
+  const emptyResult: EvaluatedSystemContribution = {
+    included: false,
+    optimalResources: 0,
+    optimalInfluence: 0,
+    optimalValue: 0,
+    modifiers: [],
+    modifierValue: 0,
+    fullValue: 0,
+    actualValue: 0,
+    equidistantPenalty: 0,
+  };
+
+  if (tileIdx === 0) return emptyResult;
+
+  const tile = map[tileIdx];
+  if (tile.type !== "SYSTEM") return emptyResult;
+
+  const distance = getHexDistance(map, homeIdx, tileIdx, graph);
+  if (distance === 0 || distance > 2) return emptyResult;
+
+  const system = systemData[tile.systemId];
+  if (!system) return emptyResult;
+
+  // This function is map-aware rather than slice-aware: it decides whether the
+  // current home actually owns this tile, based on distance from every home.
+  const homeDistances = homeIndices
+    .map((h) => getHexDistance(map, h, tileIdx, graph))
+    .filter((d) => d <= 2);
+
+  const minDistance = Math.min(...homeDistances);
+  if (distance > minDistance) return emptyResult;
+
+  // If multiple homes are tied for closest, each home only receives 1/N of the
+  // system's full value. The breakdown still shows the undivided system rows.
+  const equidistantDivisor = homeDistances.filter((d) => d === minDistance).length;
+  const systemValue = evaluateSystemValue(system, modifiers);
+  const systemModifiers = systemValue.modifiers.map((modifier) => ({
+    ...modifier,
+    equidistantShared: equidistantDivisor > 1 ? equidistantDivisor : undefined,
+  }));
+
+  const fullValue = systemValue.fullValue;
+  const actualValue = fullValue / equidistantDivisor;
+
+  return {
+    included: true,
+    optimalResources: systemValue.optimalResources,
+    optimalInfluence: systemValue.optimalInfluence,
+    optimalValue: systemValue.optimalValue,
+    modifiers: systemModifiers,
+    modifierValue: systemValue.modifierValue,
+    fullValue,
+    actualValue,
+    equidistantPenalty:
+      equidistantDivisor > 1 ? fullValue - actualValue : 0,
+  };
 }
 
 /**
@@ -198,40 +354,21 @@ export function calculateSliceValue(
   homeIndices: number[],
   modifiers: SliceValueModifiers = DEFAULT_MODIFIERS,
   graph?: HexGraph,
-  ringCount?: number,
+  _ringCount?: number,
 ): number {
+  void _ringCount;
   let totalValue = 0;
   const equidistantGraph = graph ? buildEquidistantGraph(map, graph) : undefined;
 
-  // Find all systems within 2 spaces (excluding Mecatol Rex at index 0)
   for (let i = 0; i < map.length; i++) {
-    if (i === 0) continue; // Skip Mecatol Rex - already accounted for in path bonus
-
-    const tile = map[i];
-    if (tile.type !== "SYSTEM") continue;
-
-    const distance = getHexDistance(map, homeIdx, i, equidistantGraph);
-
-    // Only count systems within 2 spaces (distance 1 and 2)
-    if (distance === 0 || distance > 2) continue;
-
-    const systemValue = getSystemValue(tile.systemId, modifiers);
-
-    // Find the minimum distance any home has to this tile
-    const homeDistances = homeIndices
-      .map((h) => getHexDistance(map, h, i, equidistantGraph))
-      .filter((d) => d <= 2);
-
-    const minDistance = Math.min(...homeDistances);
-
-    // Only count if we're at the minimum distance (closest home wins)
-    if (distance > minDistance) continue;
-
-    // Count homes at the minimum distance
-    const homesAtMinDistance = homeDistances.filter((d) => d === minDistance).length;
-
-    // Divide value by number of homes at minimum distance
-    totalValue += systemValue / homesAtMinDistance;
+    totalValue += evaluateSystemContribution(
+      map,
+      i,
+      homeIdx,
+      homeIndices,
+      modifiers,
+      equidistantGraph,
+    ).actualValue;
   }
 
   // Add path to Mecatol bonus/penalty (excluding paths through other home systems)
@@ -392,8 +529,9 @@ export function getAllSliceValues(
   map: TiMap,
   modifiers: SliceValueModifiers = DEFAULT_MODIFIERS,
   prebuiltGraph?: HexGraph,
-  ringCount?: number,
+  _ringCount?: number,
 ): Record<number, number> {
+  void _ringCount;
   const values: Record<number, number> = {};
 
   // Use pre-built graph or build one
@@ -409,7 +547,7 @@ export function getAllSliceValues(
 
   // Then calculate each slice value with equidistant logic
   homeIndices.forEach((idx) => {
-    values[idx] = calculateSliceValue(map, idx, homeIndices, modifiers, graph, ringCount);
+    values[idx] = calculateSliceValue(map, idx, homeIndices, modifiers, graph, _ringCount);
   });
 
   return values;
@@ -469,128 +607,32 @@ export function calculateSliceValueBreakdown(
   homeIndices: number[],
   modifiers: SliceValueModifiers = DEFAULT_MODIFIERS,
   graph?: HexGraph,
-  ringCount?: number,
+  _ringCount?: number,
 ): SliceValueBreakdown {
-  // Track FULL (undivided) values for display
+  void _ringCount;
   let fullOptimalResources = 0;
   let fullOptimalInfluence = 0;
   let totalEquidistantPenalty = 0;
-
   const allModifiers: SliceValueModifier[] = [];
-  let techSkipCount = 0;
-  let fullTechSkipValue = 0;
-
-  // Also track actual (divided) values for the total
   let actualTotal = 0;
   const equidistantGraph = graph ? buildEquidistantGraph(map, graph) : undefined;
 
-  // Find all systems within 2 spaces (excluding Mecatol Rex at index 0)
   for (let i = 0; i < map.length; i++) {
-    if (i === 0) continue; // Skip Mecatol Rex - already accounted for in path bonus
+    const contribution = evaluateSystemContribution(
+      map,
+      i,
+      homeIdx,
+      homeIndices,
+      modifiers,
+      equidistantGraph,
+    );
+    if (!contribution.included) continue;
 
-    const tile = map[i];
-    if (tile.type !== "SYSTEM") continue;
-
-    const distance = getHexDistance(map, homeIdx, i, equidistantGraph);
-    if (distance === 0 || distance > 2) continue;
-
-    const system = systemData[tile.systemId];
-    if (!system) continue;
-
-    // Find the minimum distance any home has to this tile
-    const homeDistances = homeIndices
-      .map((h) => getHexDistance(map, h, i, equidistantGraph))
-      .filter((d) => d <= 2);
-
-    const minDistance = Math.min(...homeDistances);
-
-    // Only count if we're at the minimum distance (closest home wins)
-    if (distance > minDistance) continue;
-
-    // Count homes at the minimum distance
-    const homesAtMinDistance = homeDistances.filter((d) => d === minDistance).length;
-    const equidistantDivisor = homesAtMinDistance;
-
-    // Calculate optimal spend for this system (FULL values)
-    let sysOptimal = 0;
-    system.planets.forEach((planet) => {
-      const optimal = Math.max(planet.resources, planet.influence);
-      sysOptimal += optimal;
-      // Track resources vs influence for breakdown (FULL values)
-      if (planet.resources >= planet.influence) {
-        fullOptimalResources += planet.resources;
-      } else {
-        fullOptimalInfluence += planet.influence;
-      }
-    });
-
-    // Track modifiers (FULL values for display)
-    let systemModifiersValue = 0;
-
-    // Tech specialties
-    system.planets.forEach((planet) => {
-      if (planet.tech && planet.tech.length > 0) {
-        techSkipCount += planet.tech.length;
-        fullTechSkipValue += planet.tech.length * modifiers.techValue;
-      }
-
-      // Legendary planets
-      if (planet.legendary) {
-        let legValue = modifiers.otherLegendaryValue;
-        let legLabel = planet.name || "Legendary";
-        if (planet.name === "Hope's End") {
-          legValue = modifiers.hopesEndValue;
-        } else if (planet.name === "Emelpar") {
-          legValue = modifiers.emelparValue;
-        } else if (planet.name === "Industrex") {
-          legValue = modifiers.industrexValue;
-        }
-        allModifiers.push({
-          label: legLabel,
-          value: legValue, // FULL value
-          equidistantShared: equidistantDivisor > 1 ? equidistantDivisor : undefined,
-        });
-        systemModifiersValue += legValue;
-      }
-
-      // Trade stations
-      if (planet.tradeStation) {
-        allModifiers.push({
-          label: "Trade Station",
-          value: modifiers.tradeStationValue, // FULL value
-          equidistantShared: equidistantDivisor > 1 ? equidistantDivisor : undefined,
-        });
-        systemModifiersValue += modifiers.tradeStationValue;
-      }
-    });
-
-    // Entropic scar
-    if (system.anomalies.includes("ENTROPIC_SCAR")) {
-      allModifiers.push({
-        label: "Entropic Scar",
-        value: modifiers.entropicScarValue, // FULL value
-        equidistantShared: equidistantDivisor > 1 ? equidistantDivisor : undefined,
-      });
-      systemModifiersValue += modifiers.entropicScarValue;
-    }
-
-    // Calculate equidistant penalty for this system
-    const fullSystemValue = sysOptimal + systemModifiersValue;
-    const actualSystemValue = fullSystemValue / equidistantDivisor;
-    actualTotal += actualSystemValue;
-
-    if (equidistantDivisor > 1) {
-      totalEquidistantPenalty += fullSystemValue - actualSystemValue;
-    }
-  }
-
-  // Add combined tech skip modifier if any (FULL value)
-  if (techSkipCount > 0) {
-    allModifiers.unshift({
-      label: "Tech",
-      value: fullTechSkipValue,
-      count: techSkipCount,
-    });
+    fullOptimalResources += contribution.optimalResources;
+    fullOptimalInfluence += contribution.optimalInfluence;
+    totalEquidistantPenalty += contribution.equidistantPenalty;
+    actualTotal += contribution.actualValue;
+    allModifiers.push(...contribution.modifiers);
   }
 
   // Calculate path to Mecatol modifier (excluding paths through other home systems)
@@ -656,7 +698,6 @@ export function calculateSliceValueBreakdown(
   }
 
   const fullOptimalSum = fullOptimalResources + fullOptimalInfluence;
-  const fullModifiersSum = allModifiers.reduce((sum, m) => sum + m.value, 0);
   const total = Math.round((actualTotal + pathToMecatolValue + supernovaPenalty + nebulaPenalty) * 10) / 10;
 
   return {
