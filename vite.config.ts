@@ -15,4 +15,22 @@ export default defineConfig({
     reactRouter(),
     tsconfigPaths(),
   ],
+  optimizeDeps: {
+    include: ["react-loading-indicators"],
+  },
+  server: {
+    warmup: {
+      clientFiles: [
+        "./app/root.tsx",
+        "./app/routes/draft.prechoice/**/*.tsx",
+        "./app/routes/draft.new/**/*.tsx",
+        "./app/routes/draft.$id/**/*.tsx",
+      ],
+      ssrFiles: [
+        "./server.ts",
+        "./app/routes/draft.new/route.tsx",
+        "./app/routes/draft.$id._index/route.tsx",
+      ],
+    },
+  },
 });
