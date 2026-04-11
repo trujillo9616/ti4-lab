@@ -73,6 +73,12 @@ export const FILTER_CATEGORIES: FilterCategory[] = [
     label: "System Type",
     filters: [
       { id: "empty", label: "Empty", searchTerm: "empty", color: "gray" },
+      {
+        id: "no-planet",
+        label: "No Planets",
+        searchTerm: "no planets",
+        color: "red",
+      },
       { id: "1planet", label: "1 Planet", searchTerm: "1 planet", color: "gray" },
       { id: "2planet", label: "2 Planets", searchTerm: "2 planet", color: "gray" },
       { id: "3planet", label: "3 Planets", searchTerm: "3 planet", color: "gray" },

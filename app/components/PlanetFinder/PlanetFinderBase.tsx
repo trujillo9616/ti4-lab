@@ -356,6 +356,12 @@ export function PlanetFinderBase({
                       </Badge>
                     ))}
 
+                    {system.planets.length === 0 && (
+                      <Badge size="xs" color="red" variant="light">
+                        NO PLANETS
+                      </Badge>
+                    )}
+
                     {system.planets.length === 0 &&
                       system.anomalies.length === 0 &&
                       system.wormholes.length === 0 &&

@@ -156,6 +156,13 @@ export const searchableSystemData = Object.values(systemData).reduce(
       nameParts.push("hyperlane");
     }
 
+    if (system.planets.length === 0) {
+      nameParts.push("no planet");
+      nameParts.push("no planets");
+      nameParts.push("red backed");
+      nameParts.push("red-backed");
+    }
+
     for (const planet of system.planets) {
       nameParts.push(planet.name.toLowerCase());
       if (planet.trait) {
