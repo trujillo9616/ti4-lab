@@ -83,6 +83,17 @@ export function AdvancedSettingsSection() {
           />
 
           <Switch
+            label="Show monument cards"
+            description="Displays faction monument cards beside the faction card in faction info modals."
+            checked={format.showMonumentImagesInFactionInfo}
+            onChange={() =>
+              format.setShowMonumentImagesInFactionInfo(
+                !format.showMonumentImagesInFactionInfo,
+              )
+            }
+          />
+
+          <Switch
             label="Allow home planets on map"
             description="Will allow you to put home planets on the board with no/minimal restrictions"
             checked={format.allowHomePlanetSearch}

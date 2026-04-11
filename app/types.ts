@@ -150,6 +150,7 @@ export type FactionId =
 export type Faction = {
   id: FactionId;
   iconPath: string;
+  monument?: string;
   name: string;
   wiki?: string;
   set: GameSet;
@@ -233,6 +234,7 @@ export type DraftSettings = {
   factionGameSets: GameSet[];
   tileGameSets: GameSet[];
   draftSpeaker: boolean;
+  showMonumentImagesInFactionInfo?: boolean;
 
   /** If specified, only these factions are allowed in the draft */
   allowedFactions?: FactionId[];

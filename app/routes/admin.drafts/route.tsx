@@ -1,9 +1,17 @@
 import {
+  ActionIcon,
+  Badge,
   Box,
   Button,
+  Collapse,
+  Divider,
   Group,
+  Pagination,
+  Progress,
   Select,
+  SimpleGrid,
   Stack,
+  Table,
   Text,
   TextInput,
 } from "@mantine/core";
@@ -28,11 +36,8 @@ import { eq } from "drizzle-orm";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
   IconDatabase,
   IconEye,
-  IconFilter,
   IconSearch,
   IconTrash,
   IconX,
@@ -69,6 +74,13 @@ const PHASE_LABELS: Record<DraftPhase, string> = {
   complete: "Complete",
 };
 
+const MODE_COLORS: Record<string, string> = {
+  base: "blue",
+  twilightsFall: "violet",
+  texasStyle: "orange",
+  presetMap: "teal",
+};
+
 function getModeLabel(mode: string): string {
   return MODE_LABELS[mode as DraftMode] ?? mode;
 }
@@ -102,11 +114,11 @@ function clampPageSize(value: number): number {
   return value;
 }
 
-function progressLevel(pct: number): string {
-  if (pct >= 100) return "complete";
-  if (pct >= 60) return "high";
-  if (pct >= 25) return "mid";
-  return "low";
+function progressColor(pct: number): string {
+  if (pct >= 100) return "teal";
+  if (pct >= 60) return "cyan";
+  if (pct >= 25) return "yellow";
+  return "red";
 }
 
 export default function AdminDraftsIndex() {
@@ -209,7 +221,9 @@ export default function AdminDraftsIndex() {
     if (searchParams.get("sortBy") !== column) return null;
     const isAsc = searchParams.get("sortOrder") === "asc";
     return (
-      <span className={classes.sortIcon}>{isAsc ? "\u25B2" : "\u25BC"}</span>
+      <Text component="span" size="xs" ml={4}>
+        {isAsc ? "\u25B2" : "\u25BC"}
+      </Text>
     );
   };
 
@@ -234,539 +248,377 @@ export default function AdminDraftsIndex() {
 
   return (
     <Box className={classes.page}>
-      {/* Header */}
-      <div className={classes.header}>
-        <Group justify="space-between" align="flex-end">
-          <h1 className={classes.title}>Drafts</h1>
-          <Text size="xs" c="dimmed">
-            {stats.allDrafts.toLocaleString()} total records
-          </Text>
-        </Group>
-      </div>
+      <Group justify="space-between" align="flex-end" mb="xl">
+        <h1 className={classes.title}>Drafts</h1>
+        <Text size="xs" c="dimmed">
+          {stats.allDrafts.toLocaleString()} total records
+        </Text>
+      </Group>
 
-      {/* Stats strip */}
+      {/* Stats */}
       <div className={classes.statsGrid}>
-        <div className={classes.statPanel}>
-          <Text className={classes.statLabel} c="dimmed">
-            Total Drafts
-          </Text>
-          <Text className={classes.statValue} c="gray.1">
-            {stats.allDrafts.toLocaleString()}
-          </Text>
-          <div className={classes.statBar} />
+        <div className={classes.statCard} style={{ "--stat-accent": "var(--mantine-color-blue-6)" } as React.CSSProperties}>
+          <Text size="xs" c="dimmed" tt="uppercase" lts="0.05em">Total</Text>
+          <Text className={classes.statValue}>{stats.allDrafts.toLocaleString()}</Text>
         </div>
-        <div className={classes.statPanel}>
-          <Text className={classes.statLabel} c="dimmed">
-            In Scope
-          </Text>
-          <Text className={classes.statValue} c="gray.1">
-            {stats.scopedDrafts.toLocaleString()}
-          </Text>
-          <Text size="xs" c="dimmed" mt={4}>
-            After mode/type/date filters
-          </Text>
-          <div className={classes.statBar} />
+        <div className={classes.statCard} style={{ "--stat-accent": "var(--mantine-color-violet-6)" } as React.CSSProperties}>
+          <Text size="xs" c="dimmed" tt="uppercase" lts="0.05em">In Scope</Text>
+          <Text className={classes.statValue}>{stats.scopedDrafts.toLocaleString()}</Text>
+          <Text size="xs" c="dimmed">After filters</Text>
         </div>
-        <div className={classes.statPanel}>
-          <Text className={classes.statLabel} c="dimmed">
-            Filtered
-          </Text>
-          <Text className={classes.statValue} c="cyan.4">
-            {filteredTotal.toLocaleString()}
-          </Text>
-          <Text size="xs" c="dimmed" mt={4}>
-            Current result set
-          </Text>
-          <div className={classes.statBar} />
+        <div className={classes.statCard} style={{ "--stat-accent": "var(--mantine-color-cyan-6)" } as React.CSSProperties}>
+          <Text size="xs" c="dimmed" tt="uppercase" lts="0.05em">Filtered</Text>
+          <Text className={classes.statValue} c="cyan">{filteredTotal.toLocaleString()}</Text>
+          <Text size="xs" c="dimmed">Current results</Text>
         </div>
-        <div className={classes.statPanel}>
-          <Text className={classes.statLabel} c="dimmed">
-            Completion
-          </Text>
-          <Text className={classes.statValue} c="gray.1">
-            {stats.completionPercent.toFixed(1)}%
-          </Text>
-          <Text size="xs" c="dimmed" mt={4}>
-            {stats.completedDrafts.toLocaleString()} completed
-          </Text>
-          <div className={classes.statBar} />
+        <div className={classes.statCard} style={{ "--stat-accent": "var(--mantine-color-teal-6)" } as React.CSSProperties}>
+          <Text size="xs" c="dimmed" tt="uppercase" lts="0.05em">Completion</Text>
+          <Text className={classes.statValue}>{stats.completionPercent.toFixed(1)}%</Text>
+          <Text size="xs" c="dimmed">{stats.completedDrafts.toLocaleString()} completed</Text>
         </div>
       </div>
 
-      {/* Filters panel */}
-      <div className={classes.panel}>
-        <div className={classes.panelHeader}>
-          <div className={classes.panelTitle}>
-            <IconFilter size={14} className={classes.panelTitleIcon} />
-            Filters
-          </div>
-          <button
-            className={classes.filterToggle}
+      {/* Filters */}
+      <Stack gap="sm" mb="lg">
+        <Group gap={6} wrap="wrap">
+          <Button variant="default" size="compact-xs" onClick={() =>
+            applyQuickFilter({ isCompleteFilter: "false", page: "1" })
+          }>
+            In Progress
+          </Button>
+          <Button variant="default" size="compact-xs" onClick={() =>
+            applyQuickFilter({ modeFilter: "texasStyle", isCompleteFilter: "false", page: "1" })
+          }>
+            Texas Active
+          </Button>
+          <Button variant="default" size="compact-xs" onClick={() =>
+            applyQuickFilter({ modeFilter: "twilightsFall", isCompleteFilter: "false", page: "1" })
+          }>
+            Twilight Active
+          </Button>
+          <Button variant="default" size="compact-xs" onClick={() =>
+            applyQuickFilter({ phaseFilter: "ban", isCompleteFilter: "false", page: "1" })
+          }>
+            Ban Phase
+          </Button>
+          <Button variant="default" size="compact-xs" onClick={() =>
+            applyQuickFilter({ isCompleteFilter: "true", page: "1" })
+          }>
+            Completed
+          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="subtle"
+              size="compact-xs"
+              color="red"
+              leftSection={<IconX size={12} />}
+              onClick={clearAllFilters}
+            >
+              Clear All
+            </Button>
+          )}
+        </Group>
+
+        <TextInput
+          placeholder="Search by URL, ID, player, or JSON..."
+          leftSection={<IconSearch size={14} />}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              updateParams({ search: searchValue || undefined });
+            }
+          }}
+          size="sm"
+        />
+
+        <SimpleGrid cols={{ base: 1, xs: 2, md: 5 }} spacing="sm">
+          <Select
+            label="Mode"
+            placeholder="All modes"
+            data={modeOptions}
+            value={searchParams.get("modeFilter") || ""}
+            onChange={(value) =>
+              updateParams({ modeFilter: value || undefined })
+            }
+            clearable
+            size="sm"
+          />
+          <Select
+            label="Type"
+            placeholder="All types"
+            data={typeOptions}
+            value={searchParams.get("typeFilter") || ""}
+            onChange={(value) =>
+              updateParams({ typeFilter: value || undefined })
+            }
+            clearable
+            size="sm"
+          />
+          <Select
+            label="Status"
+            placeholder="All"
+            data={[
+              { value: "true", label: "Completed" },
+              { value: "false", label: "In Progress" },
+            ]}
+            value={searchParams.get("isCompleteFilter") || ""}
+            onChange={(value) =>
+              updateParams({ isCompleteFilter: value || undefined })
+            }
+            clearable
+            size="sm"
+          />
+          <Select
+            label="Phase"
+            placeholder="All phases"
+            data={phaseOptions}
+            value={searchParams.get("phaseFilter") || ""}
+            onChange={(value) =>
+              updateParams({ phaseFilter: value || undefined })
+            }
+            clearable
+            size="sm"
+          />
+          <Select
+            label="Page Size"
+            data={[
+              { value: "25", label: "25" },
+              { value: "50", label: "50" },
+              { value: "100", label: "100" },
+              { value: "250", label: "250" },
+            ]}
+            value={searchParams.get("pageSize") || "100"}
+            onChange={(value) =>
+              updateParams({ pageSize: value || "100" })
+            }
+            size="sm"
+          />
+        </SimpleGrid>
+
+        <Group justify="flex-end">
+          <Button
+            variant="subtle"
+            size="compact-xs"
+            color="dimmed"
+            rightSection={
+              <IconChevronDown
+                size={12}
+                style={{
+                  transition: "transform 0.2s",
+                  transform: filtersOpen ? "rotate(180deg)" : undefined,
+                }}
+              />
+            }
             onClick={() => setFiltersOpen((v) => !v)}
           >
             Date Range
-            <IconChevronDown
-              size={12}
-              className={classes.filterToggleIcon}
-              data-open={filtersOpen}
-            />
-          </button>
-        </div>
-        <div className={classes.panelBody}>
-          {/* Quick filters */}
-          <div className={classes.quickFilters}>
-            <button
-              className={classes.quickFilter}
-              onClick={() =>
-                applyQuickFilter({ isCompleteFilter: "false", page: "1" })
-              }
-            >
-              In Progress
-            </button>
-            <button
-              className={classes.quickFilter}
-              onClick={() =>
-                applyQuickFilter({
-                  modeFilter: "texasStyle",
-                  isCompleteFilter: "false",
-                  page: "1",
-                })
-              }
-            >
-              Texas Active
-            </button>
-            <button
-              className={classes.quickFilter}
-              onClick={() =>
-                applyQuickFilter({
-                  modeFilter: "twilightsFall",
-                  isCompleteFilter: "false",
-                  page: "1",
-                })
-              }
-            >
-              Twilight Active
-            </button>
-            <button
-              className={classes.quickFilter}
-              onClick={() =>
-                applyQuickFilter({
-                  phaseFilter: "ban",
-                  isCompleteFilter: "false",
-                  page: "1",
-                })
-              }
-            >
-              Ban Phase
-            </button>
-            <button
-              className={classes.quickFilter}
-              onClick={() =>
-                applyQuickFilter({ isCompleteFilter: "true", page: "1" })
-              }
-            >
-              Completed
-            </button>
-            {hasActiveFilters && (
-              <Button
-                variant="subtle"
-                size="compact-xs"
-                color="red"
-                leftSection={<IconX size={12} />}
-                onClick={clearAllFilters}
-              >
-                Clear All
-              </Button>
-            )}
-          </div>
+          </Button>
+        </Group>
 
-          {/* Search */}
-          <Group gap="sm" mb="sm">
+        <Collapse in={filtersOpen}>
+          <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="sm">
             <TextInput
-              style={{ flex: 1 }}
-              placeholder="Search by URL, ID, player, or JSON..."
-              leftSection={<IconSearch size={14} />}
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  updateParams({ search: searchValue || undefined });
-                }
-              }}
-              size="sm"
-            />
-          </Group>
-
-          {/* Filter selects */}
-          <div className={classes.filterGrid}>
-            <Select
-              label="Mode"
-              placeholder="All modes"
-              data={modeOptions}
-              value={searchParams.get("modeFilter") || ""}
-              onChange={(value) =>
-                updateParams({ modeFilter: value || undefined })
-              }
-              clearable
-              size="sm"
-            />
-            <Select
-              label="Type"
-              placeholder="All types"
-              data={typeOptions}
-              value={searchParams.get("typeFilter") || ""}
-              onChange={(value) =>
-                updateParams({ typeFilter: value || undefined })
-              }
-              clearable
-              size="sm"
-            />
-            <Select
-              label="Status"
-              placeholder="All"
-              data={[
-                { value: "true", label: "Completed" },
-                { value: "false", label: "In Progress" },
-              ]}
-              value={searchParams.get("isCompleteFilter") || ""}
-              onChange={(value) =>
-                updateParams({ isCompleteFilter: value || undefined })
-              }
-              clearable
-              size="sm"
-            />
-            <Select
-              label="Phase"
-              placeholder="All phases"
-              data={phaseOptions}
-              value={searchParams.get("phaseFilter") || ""}
-              onChange={(value) =>
-                updateParams({ phaseFilter: value || undefined })
-              }
-              clearable
-              size="sm"
-            />
-            <Select
-              label="Page Size"
-              data={[
-                { value: "25", label: "25" },
-                { value: "50", label: "50" },
-                { value: "100", label: "100" },
-                { value: "250", label: "250" },
-              ]}
-              value={searchParams.get("pageSize") || "100"}
-              onChange={(value) =>
-                updateParams({ pageSize: value || "100" })
+              label="Created After"
+              type="date"
+              value={searchParams.get("createdAfter") || ""}
+              onChange={(e) =>
+                updateParams({ createdAfter: e.currentTarget.value || undefined })
               }
               size="sm"
             />
-          </div>
+            <TextInput
+              label="Created Before"
+              type="date"
+              value={searchParams.get("createdBefore") || ""}
+              onChange={(e) =>
+                updateParams({ createdBefore: e.currentTarget.value || undefined })
+              }
+              size="sm"
+            />
+            <TextInput
+              label="Updated After"
+              type="date"
+              value={searchParams.get("updatedAfter") || ""}
+              onChange={(e) =>
+                updateParams({ updatedAfter: e.currentTarget.value || undefined })
+              }
+              size="sm"
+            />
+            <TextInput
+              label="Updated Before"
+              type="date"
+              value={searchParams.get("updatedBefore") || ""}
+              onChange={(e) =>
+                updateParams({ updatedBefore: e.currentTarget.value || undefined })
+              }
+              size="sm"
+            />
+          </SimpleGrid>
+        </Collapse>
+      </Stack>
 
-          {/* Date filters (collapsible) */}
-          {filtersOpen && (
-            <div className={classes.dateFilters}>
-              <TextInput
-                label="Created After"
-                type="date"
-                value={searchParams.get("createdAfter") || ""}
-                onChange={(e) =>
-                  updateParams({
-                    createdAfter: e.currentTarget.value || undefined,
-                  })
-                }
-                size="sm"
-              />
-              <TextInput
-                label="Created Before"
-                type="date"
-                value={searchParams.get("createdBefore") || ""}
-                onChange={(e) =>
-                  updateParams({
-                    createdBefore: e.currentTarget.value || undefined,
-                  })
-                }
-                size="sm"
-              />
-              <TextInput
-                label="Updated After"
-                type="date"
-                value={searchParams.get("updatedAfter") || ""}
-                onChange={(e) =>
-                  updateParams({
-                    updatedAfter: e.currentTarget.value || undefined,
-                  })
-                }
-                size="sm"
-              />
-              <TextInput
-                label="Updated Before"
-                type="date"
-                value={searchParams.get("updatedBefore") || ""}
-                onChange={(e) =>
-                  updateParams({
-                    updatedBefore: e.currentTarget.value || undefined,
-                  })
-                }
-                size="sm"
-              />
-            </div>
-          )}
-        </div>
-      </div>
+      <Divider mb="lg" />
 
-      {/* Data table */}
-      <div className={classes.panel}>
-        <div className={classes.panelHeader}>
-          <div className={classes.panelTitle}>
-            <IconDatabase size={14} className={classes.panelTitleIcon} />
-            Records
-          </div>
-          <Text size="xs" c="dimmed">
-            {filteredTotal.toLocaleString()} results
-          </Text>
-        </div>
+      {/* Table */}
+      <Group justify="space-between" mb="xs">
+        <Text size="sm" fw={500}>
+          {filteredTotal.toLocaleString()} results
+        </Text>
+      </Group>
 
-        <div className={classes.tableWrap}>
-          <table className={classes.table}>
-            <thead>
-              <tr>
-                <th>Draft</th>
-                <SortTh
-                  column="mode"
-                  label="Mode"
-                  active={searchParams.get("sortBy")}
-                  icon={renderSortIcon("mode")}
-                  onClick={handleSortChange}
-                />
-                <SortTh
-                  column="type"
-                  label="Type"
-                  active={searchParams.get("sortBy")}
-                  icon={renderSortIcon("type")}
-                  onClick={handleSortChange}
-                />
-                <SortTh
-                  column="isComplete"
-                  label="Status"
-                  active={searchParams.get("sortBy")}
-                  icon={renderSortIcon("isComplete")}
-                  onClick={handleSortChange}
-                />
-                <SortTh
-                  column="phase"
-                  label="Phase"
-                  active={searchParams.get("sortBy")}
-                  icon={renderSortIcon("phase")}
-                  onClick={handleSortChange}
-                />
-                <SortTh
-                  column="progress"
-                  label="Progress"
-                  active={searchParams.get("sortBy")}
-                  icon={renderSortIcon("progress")}
-                  onClick={handleSortChange}
-                />
-                <SortTh
-                  column="players"
-                  label="Players"
-                  active={searchParams.get("sortBy")}
-                  icon={renderSortIcon("players")}
-                  onClick={handleSortChange}
-                />
-                <SortTh
-                  column="createdAt"
-                  label="Created"
-                  active={searchParams.get("sortBy")}
-                  icon={renderSortIcon("createdAt")}
-                  onClick={handleSortChange}
-                />
-                <SortTh
-                  column="updatedAt"
-                  label="Updated"
-                  active={searchParams.get("sortBy")}
-                  icon={renderSortIcon("updatedAt")}
-                  onClick={handleSortChange}
-                />
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {draftsData.length === 0 && (
-                <tr>
-                  <td colSpan={10}>
-                    <Stack align="center" className={classes.emptyState}>
-                      <IconSearch size={32} color="var(--mantine-color-dark-3)" />
-                      <Text size="sm" c="dimmed">
-                        No records match current parameters
-                      </Text>
-                    </Stack>
-                  </td>
-                </tr>
-              )}
+      <Table.ScrollContainer minWidth={900}>
+        <Table striped highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Draft</Table.Th>
+              <SortTh column="mode" label="Mode" active={searchParams.get("sortBy")} icon={renderSortIcon("mode")} onClick={handleSortChange} />
+              <SortTh column="type" label="Type" active={searchParams.get("sortBy")} icon={renderSortIcon("type")} onClick={handleSortChange} />
+              <SortTh column="isComplete" label="Status" active={searchParams.get("sortBy")} icon={renderSortIcon("isComplete")} onClick={handleSortChange} />
+              <SortTh column="phase" label="Phase" active={searchParams.get("sortBy")} icon={renderSortIcon("phase")} onClick={handleSortChange} />
+              <SortTh column="progress" label="Progress" active={searchParams.get("sortBy")} icon={renderSortIcon("progress")} onClick={handleSortChange} />
+              <SortTh column="players" label="Players" active={searchParams.get("sortBy")} icon={renderSortIcon("players")} onClick={handleSortChange} />
+              <SortTh column="createdAt" label="Created" active={searchParams.get("sortBy")} icon={renderSortIcon("createdAt")} onClick={handleSortChange} />
+              <SortTh column="updatedAt" label="Updated" active={searchParams.get("sortBy")} icon={renderSortIcon("updatedAt")} onClick={handleSortChange} />
+              <Table.Th>Actions</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {draftsData.length === 0 && (
+              <Table.Tr>
+                <Table.Td colSpan={10}>
+                  <Stack align="center" py="xl" gap="sm">
+                    <IconSearch size={32} color="var(--mantine-color-dark-3)" />
+                    <Text size="sm" c="dimmed">
+                      No records match current parameters
+                    </Text>
+                  </Stack>
+                </Table.Td>
+              </Table.Tr>
+            )}
 
-              {draftsData.map((draft) => (
-                <tr key={draft.id}>
-                  <td>
-                    <Text size="sm" fw={600} ff="monospace">
-                      {shortId(draft.id)}
+            {draftsData.map((draft) => (
+              <Table.Tr key={draft.id}>
+                <Table.Td>
+                  <Text size="sm" fw={600} ff="monospace">
+                    {shortId(draft.id)}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    {draft.urlName ?? "\u2014"}
+                  </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Badge
+                    variant="light"
+                    color={MODE_COLORS[draft.mode] ?? "gray"}
+                    size="sm"
+                  >
+                    {getModeLabel(draft.mode)}
+                  </Badge>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="xs" c="dimmed">
+                    {draft.type ?? "unknown"}
+                  </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Badge
+                    variant="dot"
+                    color={draft.isComplete ? "teal" : "yellow"}
+                    size="sm"
+                  >
+                    {draft.isComplete ? "Complete" : "Active"}
+                  </Badge>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="xs" c="dimmed">
+                    {getPhaseLabel(draft.phase)}
+                  </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Stack gap={4} miw={100}>
+                    <Text size="xs" ff="monospace" c="dimmed">
+                      {draft.selectionsCount}/{draft.pickOrderCount} (
+                      {draft.progressPercent.toFixed(0)}%)
                     </Text>
-                    <Text size="xs" c="dimmed">
-                      {draft.urlName ?? "\u2014"}
-                    </Text>
-                  </td>
-                  <td>
-                    <span
-                      className={classes.modeBadge}
-                      data-mode={draft.mode}
-                    >
-                      {getModeLabel(draft.mode)}
-                    </span>
-                  </td>
-                  <td>
-                    <Text size="xs" c="gray.4">
-                      {draft.type ?? "unknown"}
-                    </Text>
-                  </td>
-                  <td>
-                    <span
-                      className={classes.statusBadge}
-                      data-status={draft.isComplete ? "complete" : "active"}
-                    >
-                      <span
-                        className={classes.statusDot}
-                        data-status={
-                          draft.isComplete ? "complete" : "active"
-                        }
-                      />
-                      {draft.isComplete ? "Complete" : "Active"}
-                    </span>
-                  </td>
-                  <td>
-                    <Text size="xs" c="gray.4">
-                      {getPhaseLabel(draft.phase)}
-                    </Text>
-                  </td>
-                  <td>
-                    <div className={classes.progressWrap}>
-                      <Text size="xs" c="gray.4" ff="monospace">
-                        {draft.selectionsCount}/{draft.pickOrderCount} (
-                        {draft.progressPercent.toFixed(0)}%)
-                      </Text>
-                      <div className={classes.progressTrack}>
-                        <div
-                          className={classes.progressFill}
-                          data-level={progressLevel(draft.progressPercent)}
-                          style={{
-                            width: `${Math.min(draft.progressPercent, 100)}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <Text size="xs" fw={600}>
-                      {draft.playerCount}p
-                    </Text>
-                    <Text
+                    <Progress
+                      value={Math.min(draft.progressPercent, 100)}
+                      color={progressColor(draft.progressPercent)}
                       size="xs"
-                      c="dimmed"
-                      lineClamp={1}
-                      maw={160}
+                    />
+                  </Stack>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="xs" fw={600}>
+                    {draft.playerCount}p
+                  </Text>
+                  <Text size="xs" c="dimmed" lineClamp={1} maw={160}>
+                    {draft.playerNames || "\u2014"}
+                  </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="xs" ff="monospace" c="dimmed">
+                    {formatDateTime(draft.createdAt)}
+                  </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="xs" ff="monospace" c="dimmed">
+                    {formatDateTime(draft.updatedAt)}
+                  </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Group gap={4} wrap="nowrap">
+                    <ActionIcon
+                      component={Link}
+                      to={`/draft/${draft.urlName ?? draft.id}`}
+                      variant="light"
+                      color="cyan"
+                      size="sm"
                     >
-                      {draft.playerNames || "\u2014"}
-                    </Text>
-                  </td>
-                  <td>
-                    <Text size="xs" ff="monospace" c="dimmed">
-                      {formatDateTime(draft.createdAt)}
-                    </Text>
-                  </td>
-                  <td>
-                    <Text size="xs" ff="monospace" c="dimmed">
-                      {formatDateTime(draft.updatedAt)}
-                    </Text>
-                  </td>
-                  <td>
-                    <Group gap={4} wrap="nowrap">
-                      <Link to={`/draft/${draft.urlName ?? draft.id}`}>
-                        <Button
-                          size="compact-xs"
-                          variant="light"
-                          color="cyan"
-                        >
-                          <IconEye size={13} />
-                        </Button>
-                      </Link>
-                      <a
-                        href={`/admin/drafts/${draft.urlName ?? draft.id}/raw`}
+                      <IconEye size={13} />
+                    </ActionIcon>
+                    <ActionIcon
+                      component="a"
+                      href={`/admin/drafts/${draft.urlName ?? draft.id}/raw`}
+                      variant="light"
+                      color="gray"
+                      size="sm"
+                    >
+                      <IconDatabase size={13} />
+                    </ActionIcon>
+                    <Form method="delete" onSubmit={handleDeleteSubmit}>
+                      <input type="hidden" value={draft.id} name="id" />
+                      <ActionIcon
+                        type="submit"
+                        variant="subtle"
+                        color="red"
+                        size="sm"
                       >
-                        <Button
-                          size="compact-xs"
-                          variant="light"
-                          color="gray"
-                        >
-                          <IconDatabase size={13} />
-                        </Button>
-                      </a>
-                      <Form method="delete" onSubmit={handleDeleteSubmit}>
-                        <input type="hidden" value={draft.id} name="id" />
-                        <Button
-                          type="submit"
-                          size="compact-xs"
-                          variant="subtle"
-                          color="red"
-                        >
-                          <IconTrash size={13} />
-                        </Button>
-                      </Form>
-                    </Group>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        <IconTrash size={13} />
+                      </ActionIcon>
+                    </Form>
+                  </Group>
+                </Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      </Table.ScrollContainer>
 
-        {/* Pagination */}
-        <div className={classes.paginationBar}>
-          <Text size="xs" c="dimmed">
-            Showing {draftsData.length} of {filteredTotal.toLocaleString()}{" "}
-            filtered &middot; {stats.scopedDrafts.toLocaleString()} in scope
-            &middot; {stats.allDrafts.toLocaleString()} total
-          </Text>
-          <Group gap="xs">
-            <button
-              className={classes.chevronButton}
-              disabled={currentPage <= 1}
-              onClick={() => {
-                if (currentPage <= 1) return;
-                updateParams(
-                  { page: (currentPage - 1).toString() },
-                  false,
-                );
-              }}
-            >
-              <IconChevronLeft size={16} />
-            </button>
-            <span className={classes.paginationPage}>
-              {currentPage} / {Math.max(totalPages, 1)}
-            </span>
-            <button
-              className={classes.chevronButton}
-              disabled={currentPage >= totalPages}
-              onClick={() => {
-                if (currentPage >= totalPages) return;
-                updateParams(
-                  { page: (currentPage + 1).toString() },
-                  false,
-                );
-              }}
-            >
-              <IconChevronRight size={16} />
-            </button>
-          </Group>
-        </div>
-      </div>
+      {/* Pagination */}
+      <Group justify="space-between" mt="md" wrap="wrap">
+        <Text size="xs" c="dimmed">
+          Showing {draftsData.length} of {filteredTotal.toLocaleString()}{" "}
+          filtered &middot; {stats.scopedDrafts.toLocaleString()} in scope
+          &middot; {stats.allDrafts.toLocaleString()} total
+        </Text>
+        <Pagination
+          total={Math.max(totalPages, 1)}
+          value={currentPage}
+          onChange={(page) => updateParams({ page: page.toString() }, false)}
+          size="sm"
+        />
+      </Group>
     </Box>
   );
 }
@@ -786,13 +638,14 @@ function SortTh({
 }) {
   const isActive = active === column;
   return (
-    <th
-      className={`${classes.sortable} ${isActive ? classes.activeSort : ""}`}
+    <Table.Th
+      className={classes.sortable}
+      data-active={isActive || undefined}
       onClick={() => onClick(column)}
     >
       {label}
       {icon}
-    </th>
+    </Table.Th>
   );
 }
 

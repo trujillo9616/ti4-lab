@@ -2583,10 +2583,10 @@
   dependencies:
     tslib "^2.4.0"
 
-"@types/better-sqlite3@^7.6.10":
-  version "7.6.12"
-  resolved "https://registry.npmjs.org/@types/better-sqlite3/-/better-sqlite3-7.6.12.tgz"
-  integrity sha512-fnQmj8lELIj7BSrZQAdBMHEHX8OZLYIHXqAKT1O7tDfLxaINzf00PMjw22r3N/xXh0w/sGHlO6SVaCQ2mj78lg==
+"@types/better-sqlite3@^7.6.13":
+  version "7.6.13"
+  resolved "https://registry.yarnpkg.com/@types/better-sqlite3/-/better-sqlite3-7.6.13.tgz#a72387f00d2f53cab699e63f2e2c05453cf953f0"
+  integrity sha512-NMv9ASNARoKksWtsq/SHakpYAYnhBrQgGD8zkLYk/jaK8jUGn08CfEdTRgYhMypUQAfzSP8W6gNLe0q19/t4VA==
   dependencies:
     "@types/node" "*"
 
@@ -3210,10 +3210,10 @@ baseline-browser-mapping@^2.9.0:
   resolved "https://registry.yarnpkg.com/baseline-browser-mapping/-/baseline-browser-mapping-2.9.11.tgz#53724708c8db5f97206517ecfe362dbe5181deea"
   integrity sha512-Sg0xJUNDU1sJNGdfGWhVHX0kkZ+HWcvmVymJbj6NSgZZmW/8S9Y2HQ5euytnIgakgxN6papOAWiwDo1ctFDcoQ==
 
-better-sqlite3@^10.0.0:
-  version "10.1.0"
-  resolved "https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-10.1.0.tgz"
-  integrity sha512-hqpHJaCfKEZFaAWdMh6crdzRWyzQzfP6Ih8TYI0vFn01a6ZTDSbJIMXN+6AMBaBOh99DzUy8l3PsV9R3qnJDng==
+better-sqlite3@^12.8.0:
+  version "12.8.0"
+  resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-12.8.0.tgz#ec9ccd4a426a35f3b9355c147af6c92a6ddd6862"
+  integrity sha512-RxD2Vd96sQDjQr20kdP+F+dK/1OUNiVOl200vKBZY8u0vTwysfolF6Hq+3ZK2+h8My9YvZhHsF+RSGZW2VYrPQ==
   dependencies:
     bindings "^1.5.0"
     prebuild-install "^7.1.1"

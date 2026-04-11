@@ -4,6 +4,7 @@ export const factions: Record<FactionId, Faction> = {
   sardakk: {
     id: "sardakk",
     iconPath: "/factions/ti_norr.png",
+    monument: "/faction-monuments/sardakk.jpg",
     name: "Sardakk N'orr",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Sardakk_N%27orr",
@@ -19,6 +20,7 @@ export const factions: Record<FactionId, Faction> = {
   arborec: {
     id: "arborec",
     iconPath: "/factions/ti_arborec.png",
+    monument: "/faction-monuments/arborec.jpg",
     name: "Arborec",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Arborec",
@@ -35,6 +37,7 @@ export const factions: Record<FactionId, Faction> = {
   barony: {
     id: "barony",
     iconPath: "/factions/ti_letnev.png",
+    monument: "/faction-monuments/barony.jpg",
     name: "Barony of Letnev",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Barony_of_Letnev",
@@ -51,6 +54,7 @@ export const factions: Record<FactionId, Faction> = {
   saar: {
     id: "saar",
     iconPath: "/factions/ti_saar.png",
+    monument: "/faction-monuments/saar.jpg",
     name: "Clan of Saar",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Clan_of_Saar",
@@ -66,6 +70,7 @@ export const factions: Record<FactionId, Faction> = {
   muaat: {
     id: "muaat",
     iconPath: "/factions/ti_muaat.png",
+    monument: "/faction-monuments/muaat.jpg",
     name: "Embers of Muaat",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Embers_of_Muaat",
@@ -80,6 +85,7 @@ export const factions: Record<FactionId, Faction> = {
   hacan: {
     id: "hacan",
     iconPath: "/factions/ti_hacan.png",
+    monument: "/faction-monuments/hacan.jpg",
     name: "Emirates of Hacan",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Emirates_of_Hacan",
@@ -95,6 +101,7 @@ export const factions: Record<FactionId, Faction> = {
   sol: {
     id: "sol",
     iconPath: "/factions/ti_sol.png",
+    monument: "/faction-monuments/sol.jpg",
     name: "Federation of Sol",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Federation_of_Sol",
@@ -110,6 +117,7 @@ export const factions: Record<FactionId, Faction> = {
   creuss: {
     id: "creuss",
     iconPath: "/factions/ti_creuss.png",
+    monument: "/faction-monuments/creuss.jpg",
     name: "Ghosts of Creuss",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Ghosts_of_Creuss",
@@ -125,6 +133,7 @@ export const factions: Record<FactionId, Faction> = {
   l1z1x: {
     id: "l1z1x",
     iconPath: "/factions/ti_l1z1x.png",
+    monument: "/faction-monuments/l1z1x.jpg",
     name: "L1Z1X Mindnet",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/L1Z1X_Mindnet",
@@ -141,6 +150,7 @@ export const factions: Record<FactionId, Faction> = {
   mentak: {
     id: "mentak",
     iconPath: "/factions/ti_mentak.png",
+    monument: "/faction-monuments/mentak.jpg",
     name: "Mentak Coalition",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Mentak_Coalition",
@@ -157,6 +167,7 @@ export const factions: Record<FactionId, Faction> = {
   naalu: {
     id: "naalu",
     iconPath: "/factions/ti_naalu.png",
+    monument: "/faction-monuments/naalu.jpg",
     name: "Naalu Collective",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Naalu_Collective",
@@ -174,6 +185,7 @@ export const factions: Record<FactionId, Faction> = {
   nekro: {
     id: "nekro",
     iconPath: "/factions/ti_nekro.png",
+    monument: "/faction-monuments/nekro.jpg",
     name: "Nekro Virus",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Nekro_Virus",
@@ -190,6 +202,7 @@ export const factions: Record<FactionId, Faction> = {
   jolnar: {
     id: "jolnar",
     iconPath: "/factions/ti_jolnar.png",
+    monument: "/faction-monuments/jolnar.jpg",
     name: "Universities of Jol-Nar",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Universities_of_Jol-Nar",
@@ -206,6 +219,7 @@ export const factions: Record<FactionId, Faction> = {
   winnu: {
     id: "winnu",
     iconPath: "/factions/ti_winnu.png",
+    monument: "/faction-monuments/winnu.jpg",
     name: "Winnu",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Winnu",
@@ -222,6 +236,7 @@ export const factions: Record<FactionId, Faction> = {
   xxcha: {
     id: "xxcha",
     iconPath: "/factions/ti_xxcha.png",
+    monument: "/faction-monuments/xxcha.jpg",
     name: "Xxcha Kingdom",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Xxcha_Kingdom",
@@ -238,6 +253,7 @@ export const factions: Record<FactionId, Faction> = {
   yin: {
     id: "yin",
     iconPath: "/factions/ti_yin.png",
+    monument: "/faction-monuments/yin.jpg",
     name: "Yin Brotherhood",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Yin_Brotherhood",
@@ -253,6 +269,7 @@ export const factions: Record<FactionId, Faction> = {
   yssaril: {
     id: "yssaril",
     iconPath: "/factions/ti_yssaril.png",
+    monument: "/faction-monuments/yssaril.jpg",
     name: "Yssaril Tribes",
     set: "base",
     wiki: "https://twilight-imperium.fandom.com/wiki/Yssaril_Tribes",
@@ -269,6 +286,7 @@ export const factions: Record<FactionId, Faction> = {
   argent: {
     id: "argent",
     iconPath: "/factions/ti_argent.png",
+    monument: "/faction-monuments/argent.jpg",
     name: "Argent Flight",
     set: "pok",
     wiki: "https://twilight-imperium.fandom.com/wiki/Argent_Flight",
@@ -285,6 +303,7 @@ export const factions: Record<FactionId, Faction> = {
   empyrean: {
     id: "empyrean",
     iconPath: "/factions/ti_empyrean.png",
+    monument: "/faction-monuments/empyrean.jpg",
     name: "Empyrean",
     set: "pok",
     wiki: "https://twilight-imperium.fandom.com/wiki/Empyrean",
@@ -300,6 +319,7 @@ export const factions: Record<FactionId, Faction> = {
   mahact: {
     id: "mahact",
     iconPath: "/factions/ti_mahact.png",
+    monument: "/faction-monuments/mahact.jpg",
     name: "Mahact Gene-Sorcerers",
     set: "pok",
     wiki: "https://twilight-imperium.fandom.com/wiki/Mahact_Gene-Sorcerers",
@@ -316,6 +336,7 @@ export const factions: Record<FactionId, Faction> = {
   naazrokha: {
     id: "naazrokha",
     iconPath: "/factions/ti_naazrokha.png",
+    monument: "/faction-monuments/naazrokha.jpg",
     name: "Naaz-Rokha Alliance",
     set: "pok",
     wiki: "https://twilight-imperium.fandom.com/wiki/Naaz-Rokha_Alliance",
@@ -332,6 +353,7 @@ export const factions: Record<FactionId, Faction> = {
   nomad: {
     id: "nomad",
     iconPath: "/factions/ti_nomad.png",
+    monument: "/faction-monuments/nomad.jpg",
     name: "Nomad",
     set: "pok",
     wiki: "https://twilight-imperium.fandom.com/wiki/Nomad",
@@ -348,6 +370,7 @@ export const factions: Record<FactionId, Faction> = {
   titans: {
     id: "titans",
     iconPath: "/factions/ti_ul.png",
+    monument: "/faction-monuments/titans.jpg",
     name: "Titans of Ul",
     set: "pok",
     wiki: "https://twilight-imperium.fandom.com/wiki/Titans_of_Ul",
@@ -363,6 +386,7 @@ export const factions: Record<FactionId, Faction> = {
   vulraith: {
     id: "vulraith",
     iconPath: "/factions/ti_vuilraith.png",
+    monument: "/faction-monuments/vulraith.jpg",
     name: "Vuil'Raith Cabal",
     set: "pok",
     wiki: "https://twilight-imperium.fandom.com/wiki/Vuil%27Raith_Cabal",
@@ -379,6 +403,7 @@ export const factions: Record<FactionId, Faction> = {
   keleres: {
     id: "keleres",
     iconPath: "/factions/ti_keleres.png",
+    monument: "/faction-monuments/keleres.jpg",
     name: "Council Keleres",
     set: "pok",
     wiki: "https://twilight-imperium.fandom.com/wiki/Council_Keleres",
@@ -387,6 +412,7 @@ export const factions: Record<FactionId, Faction> = {
   bastion: {
     id: "bastion",
     iconPath: "/factions/ti_bastion.png",
+    monument: "/faction-monuments/bastion.jpg",
     name: "Last Bastion",
     wiki: "https://twilight-imperium.fandom.com/wiki/Last_Bastion",
     set: "te",
@@ -403,6 +429,7 @@ export const factions: Record<FactionId, Faction> = {
   dws: {
     id: "dws",
     iconPath: "/factions/ti_dws.png",
+    monument: "/faction-monuments/dws.jpg",
     name: "The Deepwrought Scholarate",
     wiki: "https://twilight-imperium.fandom.com/wiki/The_Deepwrought_Scholarate",
     set: "te",
@@ -418,6 +445,7 @@ export const factions: Record<FactionId, Faction> = {
   crimson: {
     id: "crimson",
     iconPath: "/factions/ti_crimson.png",
+    monument: "/faction-monuments/crimson.jpg",
     name: "The Crimson Rebellion",
     wiki: "https://twilight-imperium.fandom.com/wiki/The_Crimson_Rebellion",
     set: "te",
@@ -434,6 +462,7 @@ export const factions: Record<FactionId, Faction> = {
   ralnel: {
     id: "ralnel",
     iconPath: "/factions/ti_ralnel.png",
+    monument: "/faction-monuments/ralnel.jpg",
     name: "The Ral Nel Consortium",
     wiki: "https://twilight-imperium.fandom.com/wiki/The_Ral_Nel_Consortium",
     set: "te",
@@ -451,6 +480,7 @@ export const factions: Record<FactionId, Faction> = {
   firmament: {
     id: "firmament",
     iconPath: "/factions/ti_firmament.png",
+    monument: "/faction-monuments/firmament.jpg",
     name: "The Firmament",
     wiki: "https://twilight-imperium.fandom.com/wiki/The_Firmament_/_The_Obsidian",
     set: "te",
@@ -468,6 +498,7 @@ export const factions: Record<FactionId, Faction> = {
   ilyxum: {
     id: "ilyxum",
     iconPath: "/factions/ti_ilyxum.png",
+    monument: "/faction-monuments/ilyxum.jpg",
     name: "Augurs of Ilyxum",
     wiki: "https://twilight-imperium.fandom.com/wiki/Augurs_of_Ilyxum_(UNOFFICIAL)",
     set: "discordant",
@@ -475,6 +506,7 @@ export const factions: Record<FactionId, Faction> = {
   celdauri: {
     id: "celdauri",
     iconPath: "/factions/ti_celdauri.png",
+    monument: "/faction-monuments/celdauri.jpg",
     name: "Celdauri Trade Confederation",
     wiki: "https://twilight-imperium.fandom.com/wiki/Celdauri_Trade_Confederation_(UNOFFICIAL)",
     set: "discordant",
@@ -482,6 +514,7 @@ export const factions: Record<FactionId, Faction> = {
   dihmohn: {
     id: "dihmohn",
     iconPath: "/factions/ti_dihmohn.png",
+    monument: "/faction-monuments/dihmohn.jpg",
     name: "Dih-Mohn Flotilla",
     wiki: "https://twilight-imperium.fandom.com/wiki/Dih-Mohn_Flotilla_(UNOFFICIAL)",
     set: "discordant",
@@ -489,6 +522,7 @@ export const factions: Record<FactionId, Faction> = {
   florzen: {
     id: "florzen",
     iconPath: "/factions/ti_florzen.png",
+    monument: "/faction-monuments/florzen.jpg",
     name: "Florzen Profiteers",
     wiki: "https://twilight-imperium.fandom.com/wiki/Florzen_Profiteers_(UNOFFICIAL)",
     set: "discordant",
@@ -496,6 +530,7 @@ export const factions: Record<FactionId, Faction> = {
   freesystems: {
     id: "freesystems",
     iconPath: "/factions/ti_freesystems.png",
+    monument: "/faction-monuments/freesystems.jpg",
     name: "Free Systems Compact",
     wiki: "https://twilight-imperium.fandom.com/wiki/Free_Systems_Compact_(UNOFFICIAL)",
     set: "discordant",
@@ -503,6 +538,7 @@ export const factions: Record<FactionId, Faction> = {
   ghemina: {
     id: "ghemina",
     iconPath: "/factions/ti_ghemina.png",
+    monument: "/faction-monuments/ghemina.jpg",
     name: "Ghemina Raiders",
     wiki: "https://twilight-imperium.fandom.com/wiki/Ghemina_Raiders_(UNOFFICIAL)",
     set: "discordant",
@@ -510,6 +546,7 @@ export const factions: Record<FactionId, Faction> = {
   mortheus: {
     id: "mortheus",
     iconPath: "/factions/ti_mortheus.png",
+    monument: "/faction-monuments/mortheus.jpg",
     name: "Glimmer of Mortheus",
     wiki: "https://twilight-imperium.fandom.com/wiki/Glimmer_of_Mortheus_(UNOFFICIAL)",
     set: "discordant",
@@ -517,6 +554,7 @@ export const factions: Record<FactionId, Faction> = {
   kollecc: {
     id: "kollecc",
     iconPath: "/factions/ti_kollecc.png",
+    monument: "/faction-monuments/kollecc.jpg",
     name: "Kollecc Society",
     wiki: "https://twilight-imperium.fandom.com/wiki/Kollecc_Society_(UNOFFICIAL)",
     set: "discordant",
@@ -524,6 +562,7 @@ export const factions: Record<FactionId, Faction> = {
   kortali: {
     id: "kortali",
     iconPath: "/factions/ti_kortali.png",
+    monument: "/faction-monuments/kortali.jpg",
     name: "Kortali Tribunal",
     wiki: "https://twilight-imperium.fandom.com/wiki/Kortali_Tribunal_(UNOFFICIAL)",
     set: "discordant",
@@ -531,6 +570,7 @@ export const factions: Record<FactionId, Faction> = {
   lizho: {
     id: "lizho",
     iconPath: "/factions/ti_lizho.png",
+    monument: "/faction-monuments/lizho.jpg",
     name: "Li-Zho Dynasty",
     wiki: "https://twilight-imperium.fandom.com/wiki/Li-Zho_Dynasty_(UNOFFICIAL)",
     set: "discordant",
@@ -538,6 +578,7 @@ export const factions: Record<FactionId, Faction> = {
   khrask: {
     id: "khrask",
     iconPath: "/factions/ti_khrask.png",
+    monument: "/faction-monuments/khrask.jpg",
     name: "L'Tokk Khrask",
     wiki: "https://twilight-imperium.fandom.com/wiki/L%27tokk_Khrask_(UNOFFICIAL)",
     set: "discordant",
@@ -545,6 +586,7 @@ export const factions: Record<FactionId, Faction> = {
   mirveda: {
     id: "mirveda",
     iconPath: "/factions/ti_mirveda.png",
+    monument: "/faction-monuments/mirveda.jpg",
     name: "Mirveda Protectorate",
     wiki: "https://twilight-imperium.fandom.com/wiki/Mirveda_Protectorate_(UNOFFICIAL)",
     set: "discordant",
@@ -552,6 +594,7 @@ export const factions: Record<FactionId, Faction> = {
   myko: {
     id: "myko",
     iconPath: "/factions/ti_myko.png",
+    monument: "/faction-monuments/myko.jpg",
     name: "Myko-Mentori",
     wiki: "https://twilight-imperium.fandom.com/wiki/Myko-Mentori_(UNOFFICIAL)",
     set: "discordant",
@@ -559,6 +602,7 @@ export const factions: Record<FactionId, Faction> = {
   nivyn: {
     id: "nivyn",
     iconPath: "/factions/ti_nivyn.png",
+    monument: "/faction-monuments/nivyn.jpg",
     name: "Nivyn Star Kings",
     wiki: "https://twilight-imperium.fandom.com/wiki/Nivyn_Star_Kings_(UNOFFICIAL)",
     set: "discordant",
@@ -566,6 +610,7 @@ export const factions: Record<FactionId, Faction> = {
   olradin: {
     id: "olradin",
     iconPath: "/factions/ti_olradin.png",
+    monument: "/faction-monuments/olradin.jpg",
     name: "Olradin League",
     wiki: "https://twilight-imperium.fandom.com/wiki/Olradin_League_(UNOFFICIAL)",
     set: "discordant",
@@ -573,6 +618,7 @@ export const factions: Record<FactionId, Faction> = {
   rohdina: {
     id: "rohdina",
     iconPath: "/factions/ti_rohdina.png",
+    monument: "/faction-monuments/rohdina.jpg",
     name: "Roh'Dhna Mechatronics",
     wiki: "https://twilight-imperium.fandom.com/wiki/Roh%27Dhna_Mechatronics_(UNOFFICIAL)",
     set: "discordant",
@@ -580,6 +626,7 @@ export const factions: Record<FactionId, Faction> = {
   cymiae: {
     id: "cymiae",
     iconPath: "/factions/ti_cymiae.png",
+    monument: "/faction-monuments/cymiae.jpg",
     name: "Savages of Cymiae",
     wiki: "https://twilight-imperium.fandom.com/wiki/Savages_of_Cymiae_(UNOFFICIAL)",
     set: "discordant",
@@ -587,6 +634,7 @@ export const factions: Record<FactionId, Faction> = {
   axis: {
     id: "axis",
     iconPath: "/factions/ti_axis.png",
+    monument: "/faction-monuments/axis.jpg",
     name: "Shipwrights of Axis",
     wiki: "https://twilight-imperium.fandom.com/wiki/Shipwrights_of_Axis_(UNOFFICIAL)",
     set: "discordant",
@@ -594,6 +642,7 @@ export const factions: Record<FactionId, Faction> = {
   tnelis: {
     id: "tnelis",
     iconPath: "/factions/ti_tnelis.png",
+    monument: "/faction-monuments/tnelis.jpg",
     name: "Tnelis Syndicate",
     wiki: "https://twilight-imperium.fandom.com/wiki/Tnelis_Syndicate_(UNOFFICIAL)",
     set: "discordant",
@@ -601,6 +650,7 @@ export const factions: Record<FactionId, Faction> = {
   vaden: {
     id: "vaden",
     iconPath: "/factions/ti_vaden.png",
+    monument: "/faction-monuments/vaden.jpg",
     name: "Vaden Banking Clans",
     wiki: "https://twilight-imperium.fandom.com/wiki/Vaden_Banking_Clans_(UNOFFICIAL)",
     set: "discordant",
@@ -608,6 +658,7 @@ export const factions: Record<FactionId, Faction> = {
   vaylerian: {
     id: "vaylerian",
     iconPath: "/factions/ti_vaylerian.png",
+    monument: "/faction-monuments/vaylerian.jpg",
     name: "Vaylerian Scourge",
     wiki: "https://twilight-imperium.fandom.com/wiki/Vaylerian_Scourge_(UNOFFICIAL)",
     set: "discordant",
@@ -615,6 +666,7 @@ export const factions: Record<FactionId, Faction> = {
   veldyr: {
     id: "veldyr",
     iconPath: "/factions/ti_veldyr.png",
+    monument: "/faction-monuments/veldyr.jpg",
     name: "Veldyr Sovereignty",
     wiki: "https://twilight-imperium.fandom.com/wiki/Veldyr_Sovereignty_(UNOFFICIAL)",
     set: "discordant",
@@ -622,6 +674,7 @@ export const factions: Record<FactionId, Faction> = {
   rhodun: {
     id: "rhodun",
     iconPath: "/factions/ti_rhodun.png",
+    monument: "/faction-monuments/rhodun.jpg",
     name: "Zealots of Rhodun",
     wiki: "https://twilight-imperium.fandom.com/wiki/Zealots_of_Rhodun_(UNOFFICIAL)",
     set: "discordant",
@@ -629,6 +682,7 @@ export const factions: Record<FactionId, Faction> = {
   zelian: {
     id: "zelian",
     iconPath: "/factions/ti_zelian.png",
+    monument: "/faction-monuments/zelian.jpg",
     name: "Zelian Purifier",
     wiki: "https://twilight-imperium.fandom.com/wiki/Zelian_Purifier_(UNOFFICIAL)",
     set: "discordant",
@@ -636,6 +690,7 @@ export const factions: Record<FactionId, Faction> = {
   bentor: {
     id: "bentor",
     iconPath: "/factions/ti_bentor.png",
+    monument: "/faction-monuments/bentor.jpg",
     name: "Bentor Conglomerate",
     wiki: "https://twilight-imperium.fandom.com/wiki/Bentor_Conglomerate_(UNOFFICIAL)",
     set: "discordantexp",
@@ -643,6 +698,7 @@ export const factions: Record<FactionId, Faction> = {
   kjalengard: {
     id: "kjalengard",
     iconPath: "/factions/ti_kjalengard.png",
+    monument: "/faction-monuments/kjalengard.jpg",
     name: "Berserkers of Kjalengard",
     wiki: "https://twilight-imperium.fandom.com/wiki/Berserkers_of_Kjalengard_(UNOFFICIAL)",
     set: "discordantexp",
@@ -650,6 +706,7 @@ export const factions: Record<FactionId, Faction> = {
   cheiran: {
     id: "cheiran",
     iconPath: "/factions/ti_cheiran.png",
+    monument: "/faction-monuments/cheiran.jpg",
     name: "Cheiran Hordes",
     wiki: "https://twilight-imperium.fandom.com/wiki/Cheiran_Hordes_(UNOFFICIAL)",
     set: "discordantexp",
@@ -657,6 +714,7 @@ export const factions: Record<FactionId, Faction> = {
   edyn: {
     id: "edyn",
     iconPath: "/factions/ti_edyn.png",
+    monument: "/faction-monuments/edyn.jpg",
     name: "Edyn Mandate",
     wiki: "https://twilight-imperium.fandom.com/wiki/Edyn_Mandate_(UNOFFICIAL)",
     set: "discordantexp",
@@ -664,6 +722,7 @@ export const factions: Record<FactionId, Faction> = {
   ghoti: {
     id: "ghoti",
     iconPath: "/factions/ti_ghoti.png",
+    monument: "/faction-monuments/ghoti.jpg",
     name: "Ghoti Wayfarers",
     wiki: "https://twilight-imperium.fandom.com/wiki/Ghoti_Wayfarers_(UNOFFICIAL)",
     set: "discordantexp",
@@ -671,6 +730,7 @@ export const factions: Record<FactionId, Faction> = {
   gledge: {
     id: "gledge",
     iconPath: "/factions/ti_gledge.png",
+    monument: "/faction-monuments/gledge.jpg",
     name: "Gledge Union",
     wiki: "https://twilight-imperium.fandom.com/wiki/Gledge_Union_(UNOFFICIAL)",
     set: "discordantexp",
@@ -678,6 +738,7 @@ export const factions: Record<FactionId, Faction> = {
   kyro: {
     id: "kyro",
     iconPath: "/factions/ti_kyro.png",
+    monument: "/faction-monuments/kyro.jpg",
     name: "Kyro Sodality",
     wiki: "https://twilight-imperium.fandom.com/wiki/Kyro_Sodality_(UNOFFICIAL)",
     set: "discordantexp",
@@ -685,6 +746,7 @@ export const factions: Record<FactionId, Faction> = {
   lanefir: {
     id: "lanefir",
     iconPath: "/factions/ti_lanefir.png",
+    monument: "/faction-monuments/lanefir.jpg",
     name: "Lanefir Remnants",
     wiki: "https://twilight-imperium.fandom.com/wiki/Lanefir_Remnants_(UNOFFICIAL)",
     set: "discordantexp",
@@ -692,6 +754,7 @@ export const factions: Record<FactionId, Faction> = {
   kolume: {
     id: "kolume",
     iconPath: "/factions/ti_kolume.png",
+    monument: "/faction-monuments/kolume.jpg",
     name: "The Monks of Kolume",
     wiki: "https://twilight-imperium.fandom.com/wiki/Monks_of_Kolume_(UNOFFICIAL)",
     set: "discordantexp",
@@ -699,6 +762,7 @@ export const factions: Record<FactionId, Faction> = {
   nokar: {
     id: "nokar",
     iconPath: "/factions/ti_nokar.png",
+    monument: "/faction-monuments/nokar.jpg",
     name: "Nokar Sellships",
     wiki: "https://twilight-imperium.fandom.com/wiki/Nokar_Sellships_(UNOFFICIAL)",
     set: "discordantexp",
@@ -706,6 +770,7 @@ export const factions: Record<FactionId, Faction> = {
   drahn: {
     id: "drahn",
     iconPath: "/factions/ti_drahn.png",
+    monument: "/faction-monuments/drahn.jpg",
     name: "Drahn Consortium",
     wiki: "https://twilight-imperium.fandom.com/",
     set: "drahn",

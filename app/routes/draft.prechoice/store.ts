@@ -116,11 +116,13 @@ type DraftSetupStore = {
     draftPlayerColors: boolean;
     allowEmptyTiles: boolean;
     allowHomePlanetSearch: boolean;
+    showMonumentImagesInFactionInfo: boolean;
     setDraftSpeaker: (v: boolean) => void;
     setBanFactions: (v: boolean) => void;
     setDraftPlayerColors: (v: boolean) => void;
     setAllowEmptyTiles: (v: boolean) => void;
     setAllowHomePlanetSearch: (v: boolean) => void;
+    setShowMonumentImagesInFactionInfo: (v: boolean) => void;
   };
   multidraft: {
     isMultidraft: boolean;
@@ -583,6 +585,7 @@ export const useDraftSetup = create<DraftSetupStore>()(
         draftPlayerColors: false,
         allowEmptyTiles: false,
         allowHomePlanetSearch: false,
+        showMonumentImagesInFactionInfo: false,
 
         setDraftSpeaker: (v: boolean) => {
           setAndValidate((state) => {
@@ -611,6 +614,12 @@ export const useDraftSetup = create<DraftSetupStore>()(
         setAllowHomePlanetSearch: (v: boolean) => {
           setAndValidate((state) => {
             state.format.allowHomePlanetSearch = v;
+          });
+        },
+
+        setShowMonumentImagesInFactionInfo: (v: boolean) => {
+          setAndValidate((state) => {
+            state.format.showMonumentImagesInFactionInfo = v;
           });
         },
       },

@@ -193,6 +193,7 @@ const emptyDraft = (): Draft => ({
     allowEmptyTiles: false,
     allowHomePlanetSearch: false,
     draftSpeaker: false,
+    showMonumentImagesInFactionInfo: false,
     randomizeMap: false,
     randomizeSlices: false,
     factionGameSets: [],

@@ -295,6 +295,16 @@ export function DraftConfigurationPanel() {
             onChange={() => format.setDraftPlayerColors(!format.draftPlayerColors)}
           />
           <CompactSwitch
+            label="Show Monument Cards"
+            description="Display faction monument cards beside the faction card in Info modals"
+            checked={format.showMonumentImagesInFactionInfo}
+            onChange={() =>
+              format.setShowMonumentImagesInFactionInfo(
+                !format.showMonumentImagesInFactionInfo,
+              )
+            }
+          />
+          <CompactSwitch
             label="Allow Home Planets"
             description="Enable placing home planets on map"
             checked={format.allowHomePlanetSearch}

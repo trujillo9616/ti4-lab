@@ -44,129 +44,11 @@
   margin: 0;
 }
 
-/* ── Author list (vertical stack of rows) ── */
-.authorList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mantine-spacing-xl);
-}
-
-/* ── Per-author section ── */
-.authorSection {
-  position: relative;
-}
-
-.authorHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--mantine-spacing-sm);
-  padding-bottom: var(--mantine-spacing-xs);
-  border-bottom: 1px solid var(--mantine-color-dark-5);
-}
-
-.authorInfo {
-  display: flex;
-  align-items: center;
-  gap: var(--mantine-spacing-sm);
-}
-
-.authorAvatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: linear-gradient(
-    135deg,
-    var(--mantine-color-violet-8),
-    var(--mantine-color-blue-8)
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Orbitron", sans-serif;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--mantine-color-gray-0);
-  flex-shrink: 0;
-  letter-spacing: 0.02em;
-}
-
-.authorName {
-  font-family: "Orbitron", sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 0.02em;
-  color: var(--mantine-color-gray-1);
-}
-
-.authorMeta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  color: var(--mantine-color-dimmed);
-}
-
-.metaDot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--mantine-color-dark-3);
-  display: inline-block;
-}
-
-/* ── Chevron navigation ── */
-.chevronGroup {
-  display: flex;
-  gap: 4px;
-}
-
-.chevronButton {
-  all: unset;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid var(--mantine-color-dark-4);
-  background: var(--mantine-color-dark-7);
-  color: var(--mantine-color-gray-3);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.chevronButton:hover:not(:disabled) {
-  background: var(--mantine-color-dark-5);
-  border-color: var(--mantine-color-blue-7);
-  color: var(--mantine-color-blue-4);
-}
-
-.chevronButton:active:not(:disabled) {
-  transform: scale(0.94);
-}
-
-.chevronButton:disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-/* ── Horizontal carousel ── */
-.carousel {
-  display: flex;
+/* ── Responsive grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: var(--mantine-spacing-md);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
-
-  /* hide scrollbar but keep scroll */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.carousel::-webkit-scrollbar {
-  display: none;
 }
 
 /* ── Card link wrapper ── */
@@ -174,15 +56,6 @@
   text-decoration: none;
   color: inherit;
   display: flex;
-  flex-shrink: 0;
-  scroll-snap-align: start;
-  width: 280px;
-}
-
-@media (min-width: 48em) {
-  .cardLink {
-    width: 300px;
-  }
 }
 
 /* ── Card ── */
@@ -248,6 +121,35 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── Inline author tag ── */
+.authorTag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--mantine-color-violet-4);
+  letter-spacing: 0.02em;
+}
+
+.authorDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(
+    135deg,
+    var(--mantine-color-violet-8),
+    var(--mantine-color-blue-8)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  font-size: 0.55rem;
+  color: var(--mantine-color-gray-0);
+  flex-shrink: 0;
 }
 
 .description {

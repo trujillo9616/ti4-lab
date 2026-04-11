@@ -34,6 +34,8 @@ export const useDraftSettingsBuilder = (
       numSlices: Number(slices.numSlices),
       randomizeSlices: true,
       draftSpeaker: format.draftSpeaker,
+      showMonumentImagesInFactionInfo:
+        format.showMonumentImagesInFactionInfo,
       allowHomePlanetSearch: format.allowHomePlanetSearch,
       allowEmptyTiles: format.allowEmptyTiles,
       draftPlayerColors: format.draftPlayerColors,

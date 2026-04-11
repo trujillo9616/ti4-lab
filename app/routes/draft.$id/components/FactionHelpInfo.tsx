@@ -1,7 +1,8 @@
 import { Faction } from "~/types";
 import { useDisclosure } from "@mantine/hooks";
-import { Button, Modal } from "@mantine/core";
+import { Box, Button, Modal, SimpleGrid, Stack, Text } from "@mantine/core";
 import { IconEye, IconLink } from "@tabler/icons-react";
+import { useDraft } from "~/draftStore";
 
 type Props = {
   faction: Faction;
@@ -9,6 +10,10 @@ type Props = {
 
 export function FactionHelpInfo({ faction }: Props) {
   const [opened, { open, close }] = useDisclosure();
+  const showMonumentImagesInFactionInfo = useDraft(
+    (state) => state.draft.settings.showMonumentImagesInFactionInfo,
+  );
+  const showMonumentImage = !!showMonumentImagesInFactionInfo && !!faction.monument;
 
   return (
     <>
@@ -45,16 +50,46 @@ export function FactionHelpInfo({ faction }: Props) {
         title={faction.name}
         centered
       >
-        <img
-          src={`/factioncards/${faction.id}.png`}
-          style={{
-            objectFit: "contain",
-            maxHeight: 500,
-            maxWidth: "100%",
-            margin: "auto",
-            display: "block",
-          }}
-        />
+        <SimpleGrid cols={{ base: 1, md: showMonumentImage ? 2 : 1 }} spacing="lg">
+          <Stack gap="xs">
+            <Text size="sm" fw={600}>
+              Faction Card
+            </Text>
+            <Box>
+              <img
+                src={`/factioncards/${faction.id}.png`}
+                alt={`${faction.name} faction card`}
+                style={{
+                  objectFit: "contain",
+                  maxHeight: 500,
+                  maxWidth: "100%",
+                  margin: "auto",
+                  display: "block",
+                }}
+              />
+            </Box>
+          </Stack>
+          {showMonumentImage && (
+            <Stack gap="xs">
+              <Text size="sm" fw={600}>
+                Monument
+              </Text>
+              <Box>
+                <img
+                  src={faction.monument}
+                  alt={`${faction.name} monument art`}
+                  style={{
+                    objectFit: "contain",
+                    maxHeight: 500,
+                    maxWidth: "100%",
+                    margin: "auto",
+                    display: "block",
+                  }}
+                />
+              </Box>
+            </Stack>
+          )}
+        </SimpleGrid>
       </Modal>
     </>
   );

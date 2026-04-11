@@ -75,6 +75,7 @@ export default function DraftPrechoice() {
   const referenceCardPacks = useDraftSetup((state) => state.referenceCardPacks);
   const kings = useDraftSetup((state) => state.kings);
   const content = useDraftSetup((state) => state.content);
+  const format = useDraftSetup((state) => state.format);
   const texas = useDraftSetup((state) => state.texas);
 
   const [sliceSettings, setSliceSettings] = useState<
@@ -178,6 +179,8 @@ export default function DraftPrechoice() {
         randomizeMap: true,
         randomizeSlices: true,
         draftSpeaker: false,
+        showMonumentImagesInFactionInfo:
+          format.showMonumentImagesInFactionInfo,
         allowHomePlanetSearch: false,
         allowEmptyTiles: false,
         draftPlayerColors: false,

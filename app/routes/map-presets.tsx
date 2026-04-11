@@ -9,15 +9,13 @@ import { Link, useLoaderData } from "react-router";
 import { listPresetMaps, TechSkipsData } from "~/drizzle/presetMap.server";
 import classes from "./map-presets/styles.module.css";
 import {
-  IconChevronLeft,
-  IconChevronRight,
   IconEye,
   IconHeart,
   IconHeartFilled,
   IconMap,
   IconSparkles,
 } from "@tabler/icons-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { MainAppShell } from "~/components/MainAppShell";
 import { TechIcon } from "~/components/icons/TechIcon";
 import { LegendaryIcon } from "~/components/icons/LegendaryIcon";
@@ -133,177 +131,101 @@ function groupByAuthor(presets: PresetMapRecord[]): AuthorGroup[] {
   return authors;
 }
 
-function AuthorCarousel({
-  group,
-  statsById,
+function MapCard({
+  preset,
+  stats,
   onLike,
 }: {
-  group: AuthorGroup;
-  statsById: Record<string, { likes: number; views: number; liked: boolean }>;
+  preset: PresetMapRecord;
+  stats: { likes: number; views: number; liked: boolean } | undefined;
   onLike: (id: string) => void;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const updateScrollState = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
-  }, []);
-
-  const scroll = useCallback(
-    (direction: "left" | "right") => {
-      const el = scrollRef.current;
-      if (!el) return;
-      const cardWidth = 300;
-      const gap = 16;
-      const scrollAmount = (cardWidth + gap) * 2;
-      el.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
-      // Update state after scroll animation
-      setTimeout(updateScrollState, 350);
-    },
-    [updateScrollState],
-  );
-
   return (
-    <div className={classes.authorSection}>
-      <div className={classes.authorHeader}>
-        <div className={classes.authorInfo}>
-          <div className={classes.authorAvatar}>
-            {group.author.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div className={classes.authorName}>{group.author}</div>
-            <div className={classes.authorMeta}>
-              {group.maps.length} map{group.maps.length !== 1 ? "s" : ""}
-              <span className={classes.metaDot} />
-              {group.totalViews.toLocaleString()} view
-              {group.totalViews !== 1 ? "s" : ""}
-            </div>
-          </div>
+    <Link to={`/maps/${preset.slug}`} className={classes.cardLink}>
+      <div className={classes.card}>
+        <div className={classes.mapPreviewWrap}>
+          <Box
+            component="img"
+            src={`/map-preset/${preset.id}.png`}
+            alt={preset.name}
+            className={classes.mapPreview}
+          />
         </div>
-        <div className={classes.chevronGroup}>
-          <button
-            className={classes.chevronButton}
-            onClick={() => scroll("left")}
-            disabled={!canScrollLeft}
-            aria-label="Scroll left"
-          >
-            <IconChevronLeft size={18} />
-          </button>
-          <button
-            className={classes.chevronButton}
-            onClick={() => scroll("right")}
-            disabled={!canScrollRight}
-            aria-label="Scroll right"
-          >
-            <IconChevronRight size={18} />
-          </button>
+        <div className={classes.cardContent}>
+          <div className={classes.name}>{preset.name}</div>
+          <div className={classes.authorTag}>
+            <span className={classes.authorDot}>
+              {preset.author.charAt(0).toUpperCase()}
+            </span>
+            {preset.author}
+          </div>
+          <div className={classes.mapStats}>
+            {preset.avgSliceValue != null && (
+              <span className={classes.stat}>
+                <span className={classes.statValue}>
+                  {preset.avgSliceValue}
+                </span>
+                <span className={classes.statLabel}>Avg</span>
+              </span>
+            )}
+            {preset.totalResources != null &&
+              preset.totalInfluence != null && (
+                <span className={classes.stat}>
+                  <span className={classes.statValue}>
+                    {preset.totalResources}/{preset.totalInfluence}
+                  </span>
+                  <span className={classes.statLabel}>R/I</span>
+                </span>
+              )}
+            <LegendaryDisplay count={preset.legendaries} />
+            <TechSkipsDisplay techSkips={preset.techSkips} />
+          </div>
+          {preset.description && (
+            <div className={classes.description}>{preset.description}</div>
+          )}
         </div>
-      </div>
-
-      <div
-        className={classes.carousel}
-        ref={scrollRef}
-        onScroll={updateScrollState}
-      >
-        {group.maps.map((preset) => {
-          const stats = statsById[preset.id];
-          return (
-            <Link
-              key={preset.id}
-              to={`/maps/${preset.slug}`}
-              className={classes.cardLink}
+        <div className={classes.statsRow}>
+          <Group gap="xs" className={classes.statGroup}>
+            <IconEye size={14} />
+            <Text size="xs">{stats?.views ?? preset.views ?? 0}</Text>
+          </Group>
+          <Group gap={6} className={classes.statGroup}>
+            <ActionIcon
+              variant="subtle"
+              color={stats?.liked ? "red" : "gray"}
+              size="xs"
+              className={classes.heartButton}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onLike(preset.id);
+              }}
             >
-              <div className={classes.card}>
-                <div className={classes.mapPreviewWrap}>
-                  <Box
-                    component="img"
-                    src={`/map-preset/${preset.id}.png`}
-                    alt={preset.name}
-                    className={classes.mapPreview}
-                  />
-                </div>
-                <div className={classes.cardContent}>
-                  <div className={classes.name}>{preset.name}</div>
-                  <div className={classes.mapStats}>
-                    {preset.avgSliceValue != null && (
-                      <span className={classes.stat}>
-                        <span className={classes.statValue}>
-                          {preset.avgSliceValue}
-                        </span>
-                        <span className={classes.statLabel}>Avg</span>
-                      </span>
-                    )}
-                    {preset.totalResources != null &&
-                      preset.totalInfluence != null && (
-                        <span className={classes.stat}>
-                          <span className={classes.statValue}>
-                            {preset.totalResources}/{preset.totalInfluence}
-                          </span>
-                          <span className={classes.statLabel}>R/I</span>
-                        </span>
-                      )}
-                    <LegendaryDisplay count={preset.legendaries} />
-                    <TechSkipsDisplay techSkips={preset.techSkips} />
-                  </div>
-                  {preset.description && (
-                    <div className={classes.description}>
-                      {preset.description}
-                    </div>
-                  )}
-                </div>
-                <div className={classes.statsRow}>
-                  <Group gap="xs" className={classes.statGroup}>
-                    <IconEye size={14} />
-                    <Text size="xs">{stats?.views ?? preset.views ?? 0}</Text>
-                  </Group>
-                  <Group gap={6} className={classes.statGroup}>
-                    <ActionIcon
-                      variant="subtle"
-                      color={stats?.liked ? "red" : "gray"}
-                      size="xs"
-                      className={classes.heartButton}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onLike(preset.id);
-                      }}
-                    >
-                      {stats?.liked ? (
-                        <IconHeartFilled size={14} />
-                      ) : (
-                        <IconHeart size={14} />
-                      )}
-                    </ActionIcon>
-                    <Text size="xs">{stats?.likes ?? preset.likes ?? 0}</Text>
-                  </Group>
-                  <Button
-                    component="a"
-                    href={`/map-generator?map=${encodeURIComponent(
-                      preset.mapString,
-                    )}`}
-                    variant="subtle"
-                    color="blue"
-                    size="compact-xs"
-                    leftSection={<IconSparkles size={11} />}
-                    className={classes.genButton}
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    Generator
-                  </Button>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+              {stats?.liked ? (
+                <IconHeartFilled size={14} />
+              ) : (
+                <IconHeart size={14} />
+              )}
+            </ActionIcon>
+            <Text size="xs">{stats?.likes ?? preset.likes ?? 0}</Text>
+          </Group>
+          <Button
+            component="a"
+            href={`/map-generator?map=${encodeURIComponent(
+              preset.mapString,
+            )}`}
+            variant="subtle"
+            color="blue"
+            size="compact-xs"
+            leftSection={<IconSparkles size={11} />}
+            className={classes.genButton}
+            onClick={(event) => event.stopPropagation()}
+          >
+            Generator
+          </Button>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -330,7 +252,13 @@ export default function MapPresets() {
   );
 
   const totalMaps = presets.length;
-  const authorGroups = useMemo(() => groupByAuthor(presets), [presets]);
+
+  // Flatten author groups into a single ordered list,
+  // preserving author-popularity ordering
+  const orderedMaps = useMemo(() => {
+    const groups = groupByAuthor(presets);
+    return groups.flatMap((group) => group.maps);
+  }, [presets]);
 
   const handleLike = async (id: string) => {
     const response = await fetch(`/api/preset-maps/${id}/like`, {
@@ -361,17 +289,16 @@ export default function MapPresets() {
             </span>
           </div>
           <p className={classes.subtitle}>
-            Browse community-created preset maps, grouped by author. Most
-            popular first.
+            Browse community-created preset maps. Most popular first.
           </p>
         </div>
 
-        <div className={classes.authorList}>
-          {authorGroups.map((group) => (
-            <AuthorCarousel
-              key={group.author}
-              group={group}
-              statsById={statsById}
+        <div className={classes.grid}>
+          {orderedMaps.map((preset) => (
+            <MapCard
+              key={preset.id}
+              preset={preset}
+              stats={statsById[preset.id]}
               onLike={handleLike}
             />
           ))}
