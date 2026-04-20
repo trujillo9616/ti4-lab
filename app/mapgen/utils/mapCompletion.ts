@@ -135,20 +135,14 @@ function findLegalPlacement(
 /**
  * Main function to auto-complete a partially filled map.
  * Uses pre-selection algorithm - no backtracking needed.
- * @param closedTiles - Optional array of tile indices that are closed (from store, not tile.type)
  */
 export function autoCompleteMap(
   currentMap: Map,
-  availableSystemIds: SystemId[],
-  closedTiles: number[] = []
+  availableSystemIds: SystemId[]
 ): Map | null {
-  const closedSet = new Set(closedTiles);
   const openIndices: number[] = [];
   currentMap.forEach((tile, idx) => {
-    // Skip tiles in closedTiles array
-    if (closedSet.has(idx)) return;
-    // Include OPEN tiles and CLOSED tiles that were reopened (not in closedTiles)
-    if (tile.type === "OPEN" || tile.type === "CLOSED") {
+    if (tile.type === "OPEN") {
       openIndices.push(idx);
     }
   });

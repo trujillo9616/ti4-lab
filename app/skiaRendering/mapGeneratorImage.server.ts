@@ -9,39 +9,25 @@ import {
   drawMap,
   createCanvas,
 } from "./canvasUtils.server";
-import { Map, ClosedTile } from "~/types";
+import { Map } from "~/types";
 
 /**
  * Generate a map image buffer from a decoded map
  */
 export async function generateMapGeneratorImageBuffer(
   map: Map,
-  closedTiles: number[] = [],
 ): Promise<Buffer> {
   // Initialize fonts and load all assets
   initializeFonts();
   await loadAllAssets();
 
-  // Convert closedTiles indices to CLOSED tile types for rendering
-  const renderMap: Map = map.map((tile, idx) => {
-    if (closedTiles.includes(idx)) {
-      const closedTile: ClosedTile = {
-        idx: tile.idx,
-        type: "CLOSED",
-        position: tile.position,
-      };
-      return closedTile;
-    }
-    return tile;
-  });
-
   // Calculate canvas dimensions based on map size
-  const dimensions = calculateCanvasDimensions(renderMap);
+  const dimensions = calculateCanvasDimensions(map);
   const { canvas, ctx } = createCanvas(dimensions.width, dimensions.height);
 
   // Draw all layers
   drawBackground(ctx, dimensions.width, dimensions.height);
-  drawMap(ctx, renderMap, [], dimensions);
+  drawMap(ctx, map, [], dimensions);
   drawBranding(ctx, dimensions.width, dimensions.height, {
     urlText: "tidraft.com/map-generator",
   });
@@ -52,25 +38,12 @@ export async function generateMapGeneratorImageBuffer(
 
 export async function generateMapPreviewImageBuffer(
   map: Map,
-  closedTiles: number[] = [],
   options: { scale?: number; withBranding?: boolean; urlText?: string } = {},
 ): Promise<Buffer> {
   initializeFonts();
   await loadAllAssets();
 
-  const renderMap: Map = map.map((tile, idx) => {
-    if (closedTiles.includes(idx)) {
-      const closedTile: ClosedTile = {
-        idx: tile.idx,
-        type: "CLOSED",
-        position: tile.position,
-      };
-      return closedTile;
-    }
-    return tile;
-  });
-
-  const baseDimensions = calculateCanvasDimensions(renderMap);
+  const baseDimensions = calculateCanvasDimensions(map);
   const scale = options.scale ?? 0.6;
   const dimensions = {
     ...baseDimensions,
@@ -85,7 +58,7 @@ export async function generateMapPreviewImageBuffer(
   const { canvas, ctx } = createCanvas(dimensions.width, dimensions.height);
 
   drawBackground(ctx, dimensions.width, dimensions.height);
-  drawMap(ctx, renderMap, [], dimensions);
+  drawMap(ctx, map, [], dimensions);
 
   if (options.withBranding) {
     drawBranding(ctx, dimensions.width, dimensions.height, {

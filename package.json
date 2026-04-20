@@ -11,6 +11,7 @@
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "db:migrations": "drizzle-kit generate --dialect=sqlite --out=./app/drizzle/migrations --schema=./app/drizzle/schema.server.ts",
     "db:backup": "flyctl ssh sftp get -a ti4-lab /data/sqlite.db ~/Downloads/ti4-lab_$(date +'%d_%m_%Y').db",
+    "db:repair-preset-closed-tiles": "tsx ./scripts/repair-preset-closed-tiles.ts",
     "typecheck": "react-router typegen && tsc",
     "test": "vitest",
     "sync-voices": "node sync-voices-wrangler.js"

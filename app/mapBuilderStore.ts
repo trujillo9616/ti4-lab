@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { FactionId, GameSet, Map, SystemId, HomeTile, OpenTile, SystemTile } from "~/types";
+import { FactionId, GameSet, Map, SystemId, HomeTile, OpenTile, SystemTile, ClosedTile } from "~/types";
 import { systemData } from "~/data/systemData";
 import { getSystemPool } from "~/utils/system";
 import {
@@ -32,7 +32,6 @@ type MapBuilderState = {
   ringCount: number;
   hoveredHomeIdx: number | null;
   closeTileMode: boolean;
-  closedTiles: number[];
 };
 
 type MapBuilderActions = {
@@ -52,7 +51,7 @@ type MapBuilderActions = {
   toggleTileClosed: (idx: number) => void;
   addHomeSystem: () => void;
   removeHomeSystem: () => void;
-  loadDecodedMap: (map: Map, ringCount: number, gameSets: GameSet[], closedTiles: number[]) => void;
+  loadDecodedMap: (map: Map, ringCount: number, gameSets: GameSet[]) => void;
 };
 
 type MapBuilderStore = {
@@ -88,7 +87,6 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
       ringCount: initialRingCount,
       hoveredHomeIdx: null,
       closeTileMode: false,
-      closedTiles: [...mapConfigs[initialMapConfigId].closedMapTiles],
     },
 
     // Expose for PlanetFinder compatibility
@@ -229,7 +227,6 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
               mapConfigId: configId,
               map: newMap,
               ringCount: config.mapSize,
-              closedTiles: [...config.closedMapTiles],
             },
           };
         });
@@ -256,14 +253,12 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
               };
               newMap.push(openTile);
             }
-            const config = mapConfigs[store.state.mapConfigId];
             return {
               ...store,
               state: {
                 ...store.state,
                 ringCount: newRingCount,
                 map: newMap,
-                closedTiles: [...config.closedMapTiles],
               },
             };
           } else {
@@ -319,14 +314,12 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
               // If no available position, the home is lost (shouldn't happen with reasonable ring counts)
             }
 
-            const config = mapConfigs[store.state.mapConfigId];
             return {
               ...store,
               state: {
                 ...store.state,
                 ringCount: newRingCount,
                 map: newMap,
-                closedTiles: [...config.closedMapTiles],
               },
             };
           }
@@ -446,40 +439,31 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
           // Cannot close HOME tiles
           const tile = store.state.map[idx];
           if (tile.type === "HOME") return store;
+          const newMap = [...store.state.map];
 
-          const isCurrentlyClosed = store.state.closedTiles.includes(idx);
-
-          if (isCurrentlyClosed) {
-            // Reopen the tile - remove from closedTiles
-            return {
-              ...store,
-              state: {
-                ...store.state,
-                closedTiles: store.state.closedTiles.filter((i) => i !== idx),
-              },
+          if (tile.type === "CLOSED") {
+            const openTile: OpenTile = {
+              idx,
+              type: "OPEN",
+              position: tile.position,
             };
+            newMap[idx] = openTile;
           } else {
-            // Close the tile
-            let newMap = store.state.map;
-
-            // If it's a SYSTEM tile, convert to OPEN (system returns to pool automatically)
-            if (tile.type === "SYSTEM") {
-              newMap = [...store.state.map];
-              newMap[idx] = {
-                ...newMap[idx],
-                type: "OPEN",
-              };
-            }
-
-            return {
-              ...store,
-              state: {
-                ...store.state,
-                map: newMap,
-                closedTiles: [...store.state.closedTiles, idx],
-              },
+            const closedTile: ClosedTile = {
+              idx,
+              type: "CLOSED",
+              position: tile.position,
             };
+            newMap[idx] = closedTile;
           }
+
+          return {
+            ...store,
+            state: {
+              ...store.state,
+              map: newMap,
+            },
+          };
         });
       },
 
@@ -487,7 +471,6 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
         set((store) => {
           const currentMap = store.state.map;
           const ringCount = store.state.ringCount;
-          const closedTiles = store.state.closedTiles;
 
           // Find current home systems and get next seat number
           const homeTiles = currentMap.filter((tile) => tile.type === "HOME") as HomeTile[];
@@ -500,9 +483,7 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
           // First, try to find an OPEN tile on the outer ring
           let targetIdx = -1;
           const outerOpenTiles = outerRingIndices.filter(
-            (idx) =>
-              currentMap[idx].type === "OPEN" &&
-              !closedTiles.includes(idx)
+            (idx) => currentMap[idx].type === "OPEN"
           );
 
           if (outerOpenTiles.length > 0) {
@@ -514,8 +495,7 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
               .filter(
                 ({ tile, idx }) =>
                   tile.type === "OPEN" &&
-                  idx !== 0 &&
-                  !closedTiles.includes(idx)
+                  idx !== 0
               )
               .map(({ idx }) => idx);
 
@@ -527,7 +507,6 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
                 (idx) =>
                   currentMap[idx].type === "SYSTEM" &&
                   idx !== 0 &&
-                  !closedTiles.includes(idx) &&
                   (currentMap[idx] as SystemTile).systemId !== "18"
               );
 
@@ -541,7 +520,6 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
                     ({ tile, idx }) =>
                       tile.type === "SYSTEM" &&
                       idx !== 0 &&
-                      !closedTiles.includes(idx) &&
                       (tile as SystemTile).systemId !== "18"
                   )
                   .map(({ idx }) => idx);
@@ -616,7 +594,7 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
         });
       },
 
-      loadDecodedMap: (map: Map, ringCount: number, gameSets: GameSet[], closedTiles: number[]) => {
+      loadDecodedMap: (map: Map, ringCount: number, gameSets: GameSet[]) => {
         set((store) => {
           const newSystemPool = getSystemPool(gameSets);
           return {
@@ -626,7 +604,6 @@ export const useMapBuilder = create<MapBuilderStore>((set, get) => {
               map,
               ringCount,
               gameSets,
-              closedTiles,
               systemPool: newSystemPool,
               // Reset to default mapConfigId since we're loading a custom map
               mapConfigId: defaultMapConfigId,

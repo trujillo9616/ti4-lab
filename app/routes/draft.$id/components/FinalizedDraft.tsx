@@ -1,16 +1,21 @@
 import {
+  ActionIcon,
   Box,
   Button,
+  CopyButton,
   SimpleGrid,
   Stack,
   Table,
   Text,
+  TextInput,
   Title,
   Group,
   Anchor,
   Divider,
 } from "@mantine/core";
 import {
+  IconCheck,
+  IconCopy,
   IconShare,
   IconPlayerPlay,
   IconArrowBackUp,
@@ -295,20 +300,55 @@ export function FinalizedDraft() {
               </Table>
             </Section>
           )}
-          <Section>
-            <SectionTitle title="Tiles" />
-            <Text>
-              {mapString
-                .split(" ")
-                .sort((a, b) => Number(a) - Number(b))
-                .join(", ")}
-            </Text>
-            <div>
-              <Button onClick={() => navigator.clipboard.writeText(mapString)}>
-                Copy TTS String
-              </Button>
-            </div>
-          </Section>
+          <Stack gap="md">
+            <Section>
+              <SectionTitle title="Tiles" />
+              <Text size="sm">
+                {mapString
+                  .split(" ")
+                  .sort((a, b) => Number(a) - Number(b))
+                  .join(", ")}
+              </Text>
+            </Section>
+
+            <Section>
+              <SectionTitle title="TTS String" />
+              <Stack gap={6}>
+                <Text size="xs" c="dimmed">
+                  Copy this map code for Tabletop Simulator.
+                </Text>
+                <TextInput
+                  size="sm"
+                  value={mapString}
+                  readOnly
+                  rightSection={
+                    <CopyButton value={mapString}>
+                      {({ copied, copy }) => (
+                        <ActionIcon
+                          variant="subtle"
+                          color={copied ? "teal" : "gray"}
+                          onClick={copy}
+                          aria-label={copied ? "Copied TTS string" : "Copy TTS string"}
+                        >
+                          {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                        </ActionIcon>
+                      )}
+                    </CopyButton>
+                  }
+                  styles={{
+                    input: {
+                      fontFamily:
+                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace",
+                      fontSize: 12,
+                      background: "var(--mantine-color-dark-7)",
+                      border: "1px solid var(--mantine-color-dark-5)",
+                      paddingRight: 44,
+                    },
+                  }}
+                />
+              </Stack>
+            </Section>
+          </Stack>
 
           {adminMode && (
             <Box>

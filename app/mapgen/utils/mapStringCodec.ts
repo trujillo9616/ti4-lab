@@ -45,7 +45,10 @@ function encodeTile(tile: Tile): string {
  */
 export function encodeMapString(map: Map): string {
   // Skip index 0 (Mecatol Rex is implied)
-  return map.slice(1).map(encodeTile).join(",");
+  return map
+    .slice(1)
+    .map((tile) => encodeTile(tile))
+    .join(",");
 }
 
 /**
@@ -251,13 +254,12 @@ export function decodeMapString(mapString: string): DecodedMapData | null {
         break;
       }
       case "CLOSED": {
-        // Store as OPEN in map array but track in closedTiles
-        const openTile: OpenTile = {
+        const closedTile: ClosedTile = {
           idx,
-          type: "OPEN",
+          type: "CLOSED",
           position: coords[idx],
         };
-        map.push(openTile);
+        map.push(closedTile);
         closedTiles.push(idx);
         break;
       }

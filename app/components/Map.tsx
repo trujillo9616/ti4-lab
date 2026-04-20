@@ -30,7 +30,6 @@ type Props = {
   hoveredHomeIdx?: number | null;
   onHomeHover?: (idx: number | null) => void;
   closeTileMode?: boolean;
-  closedTiles?: number[];
   onToggleTileClosed?: (idx: number) => void;
 };
 
@@ -110,7 +109,6 @@ export function Map({
   hoveredHomeIdx,
   onHomeHover,
   closeTileMode = false,
-  closedTiles = [],
   onToggleTileClosed,
 }: Props) {
   const { ref, width, height } = useDimensions<HTMLDivElement>();
@@ -207,7 +205,6 @@ export function Map({
                 hoveredHomeIdx={hoveredHomeIdx}
                 onHomeHover={tile.type === "HOME" ? onHomeHover : undefined}
                 closeTileMode={closeTileMode}
-                isClosed={closedTiles.includes(tile.idx)}
               />
             );
           })}

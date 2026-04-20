@@ -39,7 +39,6 @@ type Props = {
   hoveredHomeIdx?: number | null;
   onHomeHover?: (idx: number | null) => void;
   closeTileMode?: boolean;
-  isClosed?: boolean;
 };
 const MECATOL_REX_ID = "18";
 
@@ -112,7 +111,6 @@ function AbstractArtMapTile(props: Props) {
     hoveredHomeIdx,
     onHomeHover,
     closeTileMode = false,
-    isClosed = false,
   } = props;
   const { radius, gap, hOffset, wOffset } = useContext(MapContext);
   const { x, y } = getHexPosition(position.x, position.y, radius, gap);
@@ -179,63 +177,48 @@ function AbstractArtMapTile(props: Props) {
 
   let Tile: JSX.Element | null;
 
-  // If tile is in closedTiles array, render ClosedTile instead
-  if (isClosed) {
-    Tile = (
-      <ClosedTile
-        mapId={props.mapId}
-        tileIdx={tile.idx}
-        closeTileMode={closeTileMode}
-      />
-    );
-  } else {
-    switch (tile.type) {
-      case "HOME":
-        Tile = (
-          <HomeTile
-            mapId={props.mapId}
-            tile={tile}
-            selectable={!!props.homeSelectable}
-            onSelect={props.onSelect}
-            sliceValue={props.sliceValue}
-            sliceStats={props.sliceStats}
-            coreSliceData={derivedCoreSliceData}
-            onHomeHover={onHomeHover}
-          />
-        );
-        break;
-      case "SYSTEM":
-        Tile = <SystemTile {...props} tile={tile} disablePopover={isDragging} />;
-        break;
-      case "OPEN":
-        Tile = (
-          <EmptyTile
-            {...props}
-            tile={tile}
-            isOver={isOver}
-            ringHighlight={ringHighlight}
-            hoverEffects={hoverEffects}
-          />
-        );
-        break;
-      case "CLOSED":
-        // If tile.type is CLOSED but not in closedTiles, render as OPEN
-        // This happens when user reopens a preset closed tile
-        Tile = (
-          <EmptyTile
-            {...props}
-            tile={{ ...tile, type: "OPEN" }}
-            isOver={isOver}
-            ringHighlight={ringHighlight}
-            hoverEffects={hoverEffects}
-          />
-        );
-        break;
-    }
+  switch (tile.type) {
+    case "HOME":
+      Tile = (
+        <HomeTile
+          mapId={props.mapId}
+          tile={tile}
+          selectable={!!props.homeSelectable}
+          onSelect={props.onSelect}
+          sliceValue={props.sliceValue}
+          sliceStats={props.sliceStats}
+          coreSliceData={derivedCoreSliceData}
+          onHomeHover={onHomeHover}
+        />
+      );
+      break;
+    case "SYSTEM":
+      Tile = <SystemTile {...props} tile={tile} disablePopover={isDragging} />;
+      break;
+    case "OPEN":
+      Tile = (
+        <EmptyTile
+          {...props}
+          tile={tile}
+          isOver={isOver}
+          ringHighlight={ringHighlight}
+          hoverEffects={hoverEffects}
+        />
+      );
+      break;
+    case "CLOSED":
+      Tile = (
+        <ClosedTile
+          mapId={props.mapId}
+          tileIdx={tile.idx}
+          closeTileMode={closeTileMode}
+        />
+      );
+      break;
+  }
 
-    if (tile.type === "SYSTEM" && tile.systemId === MECATOL_REX_ID) {
-      Tile = <MecatolTile {...props} tile={tile} disablePopover={isDragging} />;
-    }
+  if (tile.type === "SYSTEM" && tile.systemId === MECATOL_REX_ID) {
+    Tile = <MecatolTile {...props} tile={tile} disablePopover={isDragging} />;
   }
 
   // Show overlay on modifiable tiles when hovered or being dropped on
@@ -246,6 +229,7 @@ function AbstractArtMapTile(props: Props) {
     hoverEffects &&
     !closeTileMode &&
     tile.type !== "HOME" &&
+    tile.type !== "CLOSED" &&
     (hovered || tile.type === "OPEN" || isOver);
 
   const overlayColor = hovered

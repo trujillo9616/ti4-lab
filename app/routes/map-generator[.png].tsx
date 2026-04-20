@@ -16,10 +16,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   // Generate image buffer
-  const imageBuffer = await generateMapGeneratorImageBuffer(
-    decoded.map,
-    decoded.closedTiles,
-  );
+  const imageBuffer = await generateMapGeneratorImageBuffer(decoded.map);
 
   // Return image directly
   return new Response(imageBuffer, {

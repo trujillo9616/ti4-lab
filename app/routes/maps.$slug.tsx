@@ -19,7 +19,9 @@ import {
   IconArrowLeft,
 } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
-import { decodeMapString } from "~/mapgen/utils/mapStringCodec";
+import {
+  decodeMapString,
+} from "~/mapgen/utils/mapStringCodec";
 import { Map, MAP_INTERACTIONS } from "~/components/Map";
 import { buildPresetDraftState } from "~/mapgen/utils/presetDraft";
 import { notifications } from "@mantine/notifications";
@@ -207,7 +209,6 @@ export default function MapDetail() {
     () => (decoded ? getAllTileContributions(decoded.map) : {}),
     [decoded],
   );
-
   const handleLike = async () => {
     const response = await fetch(`/api/preset-maps/${preset.id}/like`, {
       method: "POST",

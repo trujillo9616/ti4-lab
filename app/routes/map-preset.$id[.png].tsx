@@ -19,10 +19,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw new Response("Invalid map string format", { status: 400 });
   }
 
-  const imageBuffer = await generateMapGeneratorImageBuffer(
-    decoded.map,
-    decoded.closedTiles,
-  );
+  const imageBuffer = await generateMapGeneratorImageBuffer(decoded.map);
 
   return new Response(imageBuffer, {
     headers: {

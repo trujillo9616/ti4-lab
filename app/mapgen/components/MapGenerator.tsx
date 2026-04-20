@@ -83,7 +83,6 @@ function MapGeneratorContent() {
   const ringCount = useMapBuilder((state) => state.state.ringCount);
   const hoveredHomeIdx = useMapBuilder((state) => state.state.hoveredHomeIdx);
   const closeTileMode = useMapBuilder((state) => state.state.closeTileMode);
-  const closedTiles = useMapBuilder((state) => state.state.closedTiles);
   const {
     addSystemToMap,
     removeSystemFromMap,
@@ -183,23 +182,16 @@ function MapGeneratorContent() {
     return `https://tidraft.com/map-generator.png?map=${encodeURIComponent(encoded)}`;
   }, [map]);
 
-  // Check if map is complete (no OPEN tiles, excluding closed tiles)
+  // Check if map is complete (no OPEN tiles)
   const isMapComplete = useMemo(() => {
-    return !map.some((tile, idx) => {
-      // Skip tiles that are in closedTiles
-      if (closedTiles.includes(idx)) return false;
-      return tile.type === "OPEN" || tile.type === "CLOSED";
-    });
-  }, [map, closedTiles]);
+    return !map.some((tile) => tile.type === "OPEN");
+  }, [map]);
 
-  // Make all tiles except Mecatol Rex (index 0) and closed tiles modifiable
-  // Use closedTiles array as source of truth, not tile.type
+  // Make all tiles except Mecatol Rex and closed tiles modifiable.
   const modifiableMapTiles = Array.from(
     { length: map.length },
     (_, i) => i,
-  ).filter((i) => {
-    return i !== 0 && !closedTiles.includes(i);
-  });
+  ).filter((i) => i !== 0 && map[i]?.type !== "CLOSED");
 
   const handleRandomize = () => {
     // Get current map state - preserve hyperlanes and home systems
@@ -227,11 +219,9 @@ function MapGeneratorContent() {
       }
     });
 
-    // Get the partially cleared map and current closed tiles
+    // Get the partially cleared map
     const partialMap = useMapBuilder.getState().state.map;
-    const currentClosedTiles = useMapBuilder.getState().state.closedTiles;
-
-    const completedMap = autoCompleteMap(partialMap, systemPool, currentClosedTiles);
+    const completedMap = autoCompleteMap(partialMap, systemPool);
 
     if (completedMap) {
       completedMap.forEach((tile, idx) => {
@@ -514,7 +504,7 @@ function MapGeneratorContent() {
       // New format: single `map` parameter with complete map encoding
       const decoded = decodeMapString(mapParam);
       if (decoded) {
-        loadDecodedMap(decoded.map, decoded.ringCount, decoded.gameSets, decoded.closedTiles);
+        loadDecodedMap(decoded.map, decoded.ringCount, decoded.gameSets);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -814,7 +804,6 @@ function MapGeneratorContent() {
                 hoveredHomeIdx={hoveredHomeIdx}
                 onHomeHover={setHoveredHomeIdx}
                 closeTileMode={closeTileMode}
-                closedTiles={closedTiles}
                 onToggleTileClosed={toggleTileClosed}
               />
             </Box>
