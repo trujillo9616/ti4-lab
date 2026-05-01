@@ -15,12 +15,10 @@ import { BuildableSlice } from "../components/BuildableSlice";
 import { Tile } from "~/types";
 import { systemData } from "~/data/systemData";
 import { useState } from "react";
-import { useSortedSlices } from "~/routes/draft/useSortedSlices";
 
 export function SlicesSection() {
   const config = useDraft((state) => draftConfig[state.draft.settings.type]);
   const slices = useDraft((state) => state.draft.slices);
-  const sortedSlices = useSortedSlices(slices, []);
   const {
     removeSystemFromSlice,
     addSystemToSlice,
@@ -36,7 +34,7 @@ export function SlicesSection() {
     undefined,
   );
   const handleDragStart = (event: DragStartEvent) => {
-    const [, originSliceIdx, originTileIdx] = String(event.active!.id).split("-");
+    const [, originSliceIdx] = String(event.active!.id).split("-");
     setDraggingSlice(parseInt(originSliceIdx));
   };
 
@@ -100,7 +98,7 @@ export function SlicesSection() {
           onDragStart={handleDragStart}
           sensors={sensors}
         >
-          {sortedSlices.map(({slice, idx}) => (
+          {slices.map((slice, idx) => (
             <div
               key={idx}
               style={{
