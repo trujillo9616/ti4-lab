@@ -13,7 +13,8 @@ export function calculateMapStats(slices: SystemIds[], presetMap: Map) {
       stats.push(systemStats(systemData[t]));
     });
   });
-  presetMap.forEach((t) => {
+  presetMap.forEach((t, idx) => {
+    if (idx === 0) return;
     if (t.type !== "SYSTEM") return;
     stats.push(systemStats(systemData[t.systemId]));
   });

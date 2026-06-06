@@ -3,7 +3,7 @@ import { getAllSliceValues, calculateBalanceGap } from "./sliceScoring";
 import { systemData } from "~/data/systemData";
 import { buildHexGraph } from "~/utils/hexDistance";
 import { shuffle } from "~/draft/helpers/randomization";
-import { isMapLegal } from "./mapLegality";
+import { countMapLegalityViolations } from "./mapLegality";
 
 /**
  * Attempt to improve the balance gap by swapping two systems
@@ -24,7 +24,10 @@ export function improveBalance(map: Map): Map | null {
 
   // Build graph once - valid for all swaps since we only swap non-hyperlane systems
   const graph = buildHexGraph(map);
-  const currentBalanceGap = calculateBalanceGap(getAllSliceValues(map, undefined, graph));
+  const currentBalanceGap = calculateBalanceGap(
+    getAllSliceValues(map, undefined, graph),
+  );
+  const currentLegalityViolations = countMapLegalityViolations(map);
 
   for (let a = 0; a < shuffledIndices.length; a++) {
     for (let b = 0; b < shuffledIndices.length; b++) {
@@ -47,7 +50,9 @@ export function improveBalance(map: Map): Map | null {
         return tile;
       });
 
-      if (!isMapLegal(newMap)) continue;
+      if (countMapLegalityViolations(newMap) > currentLegalityViolations) {
+        continue;
+      }
 
       const newSliceValues = getAllSliceValues(newMap, undefined, graph);
       const newBalanceGap = calculateBalanceGap(newSliceValues);

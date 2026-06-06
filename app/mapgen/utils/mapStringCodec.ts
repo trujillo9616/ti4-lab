@@ -1,4 +1,14 @@
-import { Map, Tile, SystemTile, HomeTile, OpenTile, ClosedTile, SystemId, GameSet } from "~/types";
+import {
+  Map,
+  Tile,
+  SystemTile,
+  HomeTile,
+  OpenTile,
+  ClosedTile,
+  SystemId,
+  GameSet,
+  TilePosition,
+} from "~/types";
 import { systemData } from "~/data/systemData";
 import { generateHexRings } from "~/utils/hexCoordinates";
 
@@ -21,7 +31,10 @@ function encodeTile(tile: Tile): string {
   switch (tile.type) {
     case "SYSTEM": {
       const systemTile = tile as SystemTile;
-      if (systemTile.rotation && VALID_ROTATIONS.includes(systemTile.rotation)) {
+      if (
+        systemTile.rotation &&
+        VALID_ROTATIONS.includes(systemTile.rotation)
+      ) {
         return `${systemTile.systemId}:${systemTile.rotation}`;
       }
       return systemTile.systemId;
@@ -37,6 +50,31 @@ function encodeTile(tile: Tile): string {
     default:
       return "_";
   }
+}
+
+function systemTile(
+  idx: number,
+  position: TilePosition,
+  systemId: SystemId,
+  rotation?: number,
+): SystemTile {
+  return { idx, type: "SYSTEM", systemId, position, rotation };
+}
+
+function openTile(idx: number, position: TilePosition): OpenTile {
+  return { idx, type: "OPEN", position };
+}
+
+function homeTile(
+  idx: number,
+  position: TilePosition,
+  seat?: number,
+): HomeTile {
+  return { idx, type: "HOME", seat, position };
+}
+
+function closedTile(idx: number, position: TilePosition): ClosedTile {
+  return { idx, type: "CLOSED", position };
 }
 
 /**
@@ -61,6 +99,16 @@ export type DecodedMapData = {
   closedTiles: number[];
 };
 
+export type DecodedTtsMapData = {
+  map: Map;
+  ringCount: number;
+  gameSets: GameSet[];
+};
+
+type EncodeTtsMapStringOptions = {
+  homeSystemId?: (tile: HomeTile) => SystemId | "0" | undefined;
+};
+
 /**
  * Derives the ring count from the number of encoded values.
  * Formula: ringCount = (-1 + sqrt(1 + 4*length/3)) / 2
@@ -73,16 +121,7 @@ export type DecodedMapData = {
  * | 5     | 91          | 90             |
  */
 function deriveRingCount(encodedLength: number): number {
-  // Total tiles = 1 + 3*n*(n+1) where n = ring count
-  // Solving for n: n = (-1 + sqrt(1 + 4*length/3)) / 2
-  // But since encoded length excludes Mecatol Rex: totalTiles = encodedLength + 1
-  const totalTiles = encodedLength + 1;
-  // totalTiles = 1 + 3*n*(n+1)
-  // 3*n*(n+1) = totalTiles - 1
-  // n*(n+1) = (totalTiles - 1) / 3
-  // n^2 + n - (totalTiles - 1)/3 = 0
-  // Using quadratic formula: n = (-1 + sqrt(1 + 4*(totalTiles-1)/3)) / 2
-  const k = (totalTiles - 1) / 3;
+  const k = encodedLength / 3;
   const n = (-1 + Math.sqrt(1 + 4 * k)) / 2;
   return Math.round(n);
 }
@@ -94,11 +133,10 @@ function normalizeRotation(rotation: number): number {
   if (VALID_ROTATIONS.includes(rotation)) {
     return rotation;
   }
-  // Find the closest valid rotation
-  const closest = VALID_ROTATIONS.reduce((prev, curr) =>
-    Math.abs(curr - rotation) < Math.abs(prev - rotation) ? curr : prev
+
+  return VALID_ROTATIONS.reduce((prev, curr) =>
+    Math.abs(curr - rotation) < Math.abs(prev - rotation) ? curr : prev,
   );
-  return closest;
 }
 
 /**
@@ -107,21 +145,23 @@ function normalizeRotation(rotation: number): number {
  */
 function decodeTile(
   tileStr: string,
-  idx: number
-): { type: Tile["type"]; systemId?: SystemId; rotation?: number; seat?: number } | null {
+  idx: number,
+): {
+  type: Tile["type"];
+  systemId?: SystemId;
+  rotation?: number;
+  seat?: number;
+} {
   const str = tileStr.trim();
 
-  // OPEN tile
   if (str === "_") {
     return { type: "OPEN" };
   }
 
-  // CLOSED tile
   if (str === "X") {
     return { type: "CLOSED" };
   }
 
-  // HOME tile: H{seat}
   if (str.startsWith("H")) {
     const seatStr = str.slice(1);
     const seat = parseInt(seatStr, 10);
@@ -133,13 +173,13 @@ function decodeTile(
     return { type: "OPEN" };
   }
 
-  // SYSTEM tile: {systemId} or {systemId}:{rotation}
   const parts = str.split(":");
   const systemId = parts[0] as SystemId;
 
-  // Validate system ID exists
   if (!systemData[systemId]) {
-    console.warn(`Invalid system ID: "${systemId}" at index ${idx}, treating as OPEN`);
+    console.warn(
+      `Invalid system ID: "${systemId}" at index ${idx}, treating as OPEN`,
+    );
     return { type: "OPEN" };
   }
 
@@ -152,6 +192,26 @@ function decodeTile(
   }
 
   return { type: "SYSTEM", systemId, rotation };
+}
+
+function decodeParts(parts: string[]) {
+  const ringCount = deriveRingCount(parts.length);
+  if (ringCount < 2 || ringCount > 5) {
+    console.warn(`Invalid ring count derived: ${ringCount}`);
+    return null;
+  }
+
+  const coords = generateHexRings(ringCount);
+  const map: Map = [systemTile(0, coords[0], "18")];
+
+  return { coords, map, ringCount };
+}
+
+function fillRemainingOpenTiles(map: Map, coords: TilePosition[]) {
+  while (map.length < coords.length) {
+    const idx = map.length;
+    map.push(openTile(idx, coords[idx]));
+  }
 }
 
 /**
@@ -185,115 +245,111 @@ export function decodeMapString(mapString: string): DecodedMapData | null {
   }
 
   const parts = mapString.split(",");
-  if (parts.length === 0) {
-    return null;
-  }
+  const decodedParts = decodeParts(parts);
+  if (!decodedParts) return null;
 
-  // Derive ring count from encoded length
-  const ringCount = deriveRingCount(parts.length);
-  if (ringCount < 2 || ringCount > 5) {
-    console.warn(`Invalid ring count derived: ${ringCount}`);
-    return null;
-  }
-
-  // Generate coordinates for the ring count
-  const coords = generateHexRings(ringCount);
-  const totalTiles = coords.length;
-
-  // Create the map array starting with Mecatol Rex at index 0
-  const map: Map = [];
+  const { coords, map, ringCount } = decodedParts;
   const closedTiles: number[] = [];
   const systemIds: SystemId[] = [];
 
-  // Index 0 is always Mecatol Rex
-  const mecatolTile: SystemTile = {
-    idx: 0,
-    type: "SYSTEM",
-    systemId: "18",
-    position: coords[0],
-  };
-  map.push(mecatolTile);
-
-  // Decode remaining tiles (parts correspond to indices 1+)
-  for (let i = 0; i < parts.length && i + 1 < totalTiles; i++) {
+  for (let i = 0; i < parts.length && i + 1 < coords.length; i++) {
     const idx = i + 1;
     const decoded = decodeTile(parts[i], idx);
 
-    if (!decoded) {
-      // Fallback to OPEN tile
-      const openTile: OpenTile = {
-        idx,
-        type: "OPEN",
-        position: coords[idx],
-      };
-      map.push(openTile);
-      continue;
-    }
-
     switch (decoded.type) {
       case "SYSTEM": {
-        const systemTile: SystemTile = {
-          idx,
-          type: "SYSTEM",
-          systemId: decoded.systemId!,
-          position: coords[idx],
-          rotation: decoded.rotation,
-        };
-        map.push(systemTile);
+        map.push(
+          systemTile(idx, coords[idx], decoded.systemId!, decoded.rotation),
+        );
         systemIds.push(decoded.systemId!);
         break;
       }
       case "HOME": {
-        const homeTile: HomeTile = {
-          idx,
-          type: "HOME",
-          seat: decoded.seat,
-          position: coords[idx],
-        };
-        map.push(homeTile);
+        map.push(homeTile(idx, coords[idx], decoded.seat));
         break;
       }
       case "CLOSED": {
-        const closedTile: ClosedTile = {
-          idx,
-          type: "CLOSED",
-          position: coords[idx],
-        };
-        map.push(closedTile);
+        map.push(closedTile(idx, coords[idx]));
         closedTiles.push(idx);
         break;
       }
       case "OPEN":
       default: {
-        const openTile: OpenTile = {
-          idx,
-          type: "OPEN",
-          position: coords[idx],
-        };
-        map.push(openTile);
+        map.push(openTile(idx, coords[idx]));
         break;
       }
     }
   }
 
-  // Fill any remaining tiles as OPEN (in case string is shorter than expected)
-  while (map.length < totalTiles) {
-    const idx = map.length;
-    const openTile: OpenTile = {
-      idx,
-      type: "OPEN",
-      position: coords[idx],
-    };
-    map.push(openTile);
-  }
-
-  // Infer game sets from placed systems
-  const gameSets = inferGameSetsFromTiles(systemIds);
+  fillRemainingOpenTiles(map, coords);
 
   return {
     map,
     ringCount,
-    gameSets,
+    gameSets: inferGameSetsFromTiles(systemIds),
     closedTiles,
+  };
+}
+
+export function encodeTtsMapString(
+  map: Map,
+  options: EncodeTtsMapStringOptions = {},
+): string {
+  return map
+    .slice(1)
+    .map((tile) => {
+      if (tile.type === "HOME") return options.homeSystemId?.(tile) ?? "0";
+      if (tile.type === "SYSTEM") return tile.systemId;
+      return "-1";
+    })
+    .join(" ");
+}
+
+export function decodeTtsMapString(
+  ttsString: string,
+): DecodedTtsMapData | null {
+  if (!ttsString || typeof ttsString !== "string") {
+    return null;
+  }
+
+  const parts = ttsString.trim().split(/\s+/).filter(Boolean);
+  const decodedParts = parts.length > 0 ? decodeParts(parts) : null;
+  if (!decodedParts) return null;
+
+  const { coords, map, ringCount } = decodedParts;
+  const systemIds: SystemId[] = [];
+  let nextSeat = 0;
+
+  for (let i = 0; i < parts.length && i + 1 < coords.length; i++) {
+    const idx = i + 1;
+    const value = parts[i];
+
+    if (value === "0") {
+      map.push(homeTile(idx, coords[idx], nextSeat));
+      nextSeat++;
+      continue;
+    }
+
+    if (value === "-1") {
+      map.push(openTile(idx, coords[idx]));
+      continue;
+    }
+
+    if (systemData[value as SystemId]) {
+      const systemId = value as SystemId;
+      map.push(systemTile(idx, coords[idx], systemId));
+      systemIds.push(systemId);
+      continue;
+    }
+
+    map.push(openTile(idx, coords[idx]));
+  }
+
+  fillRemainingOpenTiles(map, coords);
+
+  return {
+    map,
+    ringCount,
+    gameSets: inferGameSetsFromTiles(systemIds),
   };
 }

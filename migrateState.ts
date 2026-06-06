@@ -10,9 +10,10 @@ async function migrateState() {
   let hasMore = true;
 
   while (hasMore) {
-    const result = await findDrafts({ page, pageSize: 100 });
+    const result = await findDrafts({ page, pageSize: 100, includeData: true });
 
     for (const draft of result.drafts) {
+      if (!draft.data) continue;
       // Delete drafts with miltyeqless or wekker draft types (legacy types no longer in DraftType union)
       const draftType = draft.data.settings.type as string;
       if (draftType === "miltyeqless" || draftType === "wekker") {

@@ -1,19 +1,19 @@
 import {
   ActionIcon,
+  Accordion,
   Badge,
   Box,
   Button,
-  Collapse,
-  Divider,
   Group,
   Pagination,
+  Paper,
   Progress,
   Select,
-  SimpleGrid,
   Stack,
   Table,
   Text,
   TextInput,
+  Title,
 } from "@mantine/core";
 import {
   ActionFunctionArgs,
@@ -25,17 +25,15 @@ import {
   useSearchParams,
   useSubmit,
 } from "react-router";
-import {
-  DraftMode,
-  DraftPhase,
-  findDrafts,
-} from "~/drizzle/draft.server";
+import { DraftMode, DraftPhase, findDrafts } from "~/drizzle/draft.server";
 import { db } from "~/drizzle/config.server";
 import { drafts } from "~/drizzle/schema.server";
 import { eq } from "drizzle-orm";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 import {
   IconChevronDown,
+  IconChevronUp,
   IconDatabase,
   IconEye,
   IconSearch,
@@ -81,12 +79,74 @@ const MODE_COLORS: Record<string, string> = {
   presetMap: "teal",
 };
 
+const MODE_FILTER_OPTIONS = Object.keys(MODE_LABELS).map((mode) => ({
+  value: mode,
+  label: getModeLabel(mode),
+}));
+
+const PHASE_FILTER_OPTIONS = Object.keys(PHASE_LABELS).map((phase) => ({
+  value: phase,
+  label: getPhaseLabel(phase),
+}));
+
+const QUICK_FILTERS: Array<{
+  label: string;
+  updates: Record<string, string>;
+}> = [
+  { label: "In Progress", updates: { isCompleteFilter: "false" } },
+  {
+    label: "Texas Active",
+    updates: { modeFilter: "texasStyle", isCompleteFilter: "false" },
+  },
+  {
+    label: "Twilight Active",
+    updates: { modeFilter: "twilightsFall", isCompleteFilter: "false" },
+  },
+  {
+    label: "Ban Phase",
+    updates: { phaseFilter: "ban", isCompleteFilter: "false" },
+  },
+  { label: "Completed", updates: { isCompleteFilter: "true" } },
+];
+
+const SORT_COLUMNS: Array<{ column: SortBy; label: string }> = [
+  { column: "mode", label: "Mode" },
+  { column: "type", label: "Type" },
+  { column: "isComplete", label: "Status" },
+  { column: "phase", label: "Phase" },
+  { column: "progress", label: "Progress" },
+  { column: "players", label: "Players" },
+  { column: "createdAt", label: "Created" },
+  { column: "updatedAt", label: "Updated" },
+];
+
+const DATE_FILTERS = [
+  { label: "Created After", param: "createdAfter" },
+  { label: "Created Before", param: "createdBefore" },
+  { label: "Updated After", param: "updatedAfter" },
+  { label: "Updated Before", param: "updatedBefore" },
+];
+
 function getModeLabel(mode: string): string {
   return MODE_LABELS[mode as DraftMode] ?? mode;
 }
 
 function getPhaseLabel(phase: string): string {
   return PHASE_LABELS[phase as DraftPhase] ?? phase;
+}
+
+function withCounts(
+  options: Array<{ value: string; label: string }>,
+  counts: Record<string, number>,
+) {
+  return options.map((option) => {
+    const count = counts[option.value];
+    return {
+      ...option,
+      label:
+        count === undefined ? option.label : `${option.label} (${count})`,
+    };
+  });
 }
 
 function shortId(id: string): string {
@@ -134,7 +194,6 @@ export default function AdminDraftsIndex() {
   const [searchValue, setSearchValue] = useState(
     searchParams.get("search") || "",
   );
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     setSearchValue(searchParams.get("search") || "");
@@ -196,35 +255,19 @@ export default function AdminDraftsIndex() {
   );
 
   const modeOptions = useMemo(
-    () =>
-      Object.entries(stats.draftsByMode)
-        .sort(([, a], [, b]) => b - a)
-        .map(([mode, count]) => ({
-          value: mode,
-          label: `${getModeLabel(mode)} (${count})`,
-        })),
+    () => withCounts(MODE_FILTER_OPTIONS, stats.draftsByMode),
     [stats.draftsByMode],
   );
 
   const phaseOptions = useMemo(
-    () =>
-      Object.entries(stats.draftsByPhase)
-        .sort(([, a], [, b]) => b - a)
-        .map(([phase, count]) => ({
-          value: phase,
-          label: `${getPhaseLabel(phase)} (${count})`,
-        })),
+    () => withCounts(PHASE_FILTER_OPTIONS, stats.draftsByPhase),
     [stats.draftsByPhase],
   );
 
   const renderSortIcon = (column: SortBy) => {
     if (searchParams.get("sortBy") !== column) return null;
     const isAsc = searchParams.get("sortOrder") === "asc";
-    return (
-      <Text component="span" size="xs" ml={4}>
-        {isAsc ? "\u25B2" : "\u25BC"}
-      </Text>
-    );
+    return isAsc ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />;
   };
 
   const handleDeleteSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -247,220 +290,178 @@ export default function AdminDraftsIndex() {
     searchParams.has("updatedBefore");
 
   return (
-    <Box className={classes.page}>
+    <Box py="xl">
       <Group justify="space-between" align="flex-end" mb="xl">
-        <h1 className={classes.title}>Drafts</h1>
+        <Box>
+          <Title order={1} size="h2" c="gray.1">
+            Drafts
+          </Title>
+          <Text size="xs" c="dimmed" tt="uppercase" lts="0.08em">
+            Admin registry
+          </Text>
+        </Box>
         <Text size="xs" c="dimmed">
           {stats.allDrafts.toLocaleString()} total records
         </Text>
       </Group>
 
-      {/* Stats */}
       <div className={classes.statsGrid}>
-        <div className={classes.statCard} style={{ "--stat-accent": "var(--mantine-color-blue-6)" } as React.CSSProperties}>
-          <Text size="xs" c="dimmed" tt="uppercase" lts="0.05em">Total</Text>
-          <Text className={classes.statValue}>{stats.allDrafts.toLocaleString()}</Text>
-        </div>
-        <div className={classes.statCard} style={{ "--stat-accent": "var(--mantine-color-violet-6)" } as React.CSSProperties}>
-          <Text size="xs" c="dimmed" tt="uppercase" lts="0.05em">In Scope</Text>
-          <Text className={classes.statValue}>{stats.scopedDrafts.toLocaleString()}</Text>
-          <Text size="xs" c="dimmed">After filters</Text>
-        </div>
-        <div className={classes.statCard} style={{ "--stat-accent": "var(--mantine-color-cyan-6)" } as React.CSSProperties}>
-          <Text size="xs" c="dimmed" tt="uppercase" lts="0.05em">Filtered</Text>
-          <Text className={classes.statValue} c="cyan">{filteredTotal.toLocaleString()}</Text>
-          <Text size="xs" c="dimmed">Current results</Text>
-        </div>
-        <div className={classes.statCard} style={{ "--stat-accent": "var(--mantine-color-teal-6)" } as React.CSSProperties}>
-          <Text size="xs" c="dimmed" tt="uppercase" lts="0.05em">Completion</Text>
-          <Text className={classes.statValue}>{stats.completionPercent.toFixed(1)}%</Text>
-          <Text size="xs" c="dimmed">{stats.completedDrafts.toLocaleString()} completed</Text>
-        </div>
+        <StatPanel
+          label="Total"
+          value={stats.allDrafts.toLocaleString()}
+          color="blue"
+        />
+        <StatPanel
+          label="In Scope"
+          value={stats.scopedDrafts.toLocaleString()}
+          detail="After filters"
+          color="violet"
+        />
+        <StatPanel
+          label="Filtered"
+          value={filteredTotal.toLocaleString()}
+          detail="Current results"
+          color="cyan"
+        />
+        <StatPanel
+          label="Completion"
+          value={`${stats.completionPercent.toFixed(1)}%`}
+          detail={`${stats.completedDrafts.toLocaleString()} completed`}
+          color="teal"
+        />
       </div>
 
-      {/* Filters */}
-      <Stack gap="sm" mb="lg">
-        <Group gap={6} wrap="wrap">
-          <Button variant="default" size="compact-xs" onClick={() =>
-            applyQuickFilter({ isCompleteFilter: "false", page: "1" })
-          }>
-            In Progress
-          </Button>
-          <Button variant="default" size="compact-xs" onClick={() =>
-            applyQuickFilter({ modeFilter: "texasStyle", isCompleteFilter: "false", page: "1" })
-          }>
-            Texas Active
-          </Button>
-          <Button variant="default" size="compact-xs" onClick={() =>
-            applyQuickFilter({ modeFilter: "twilightsFall", isCompleteFilter: "false", page: "1" })
-          }>
-            Twilight Active
-          </Button>
-          <Button variant="default" size="compact-xs" onClick={() =>
-            applyQuickFilter({ phaseFilter: "ban", isCompleteFilter: "false", page: "1" })
-          }>
-            Ban Phase
-          </Button>
-          <Button variant="default" size="compact-xs" onClick={() =>
-            applyQuickFilter({ isCompleteFilter: "true", page: "1" })
-          }>
-            Completed
-          </Button>
-          {hasActiveFilters && (
-            <Button
-              variant="subtle"
-              size="compact-xs"
-              color="red"
-              leftSection={<IconX size={12} />}
-              onClick={clearAllFilters}
-            >
-              Clear All
-            </Button>
-          )}
-        </Group>
+      <Paper withBorder radius="xs" p="md" bg="dark.7" mb="lg">
+        <Stack gap="sm">
+          <Group gap={6} wrap="wrap">
+            {QUICK_FILTERS.map((filter) => (
+              <Button
+                key={filter.label}
+                variant="default"
+                size="compact-xs"
+                onClick={() => applyQuickFilter(filter.updates)}
+              >
+                {filter.label}
+              </Button>
+            ))}
+            {hasActiveFilters && (
+              <Button
+                variant="subtle"
+                size="compact-xs"
+                color="red"
+                leftSection={<IconX size={12} />}
+                onClick={clearAllFilters}
+              >
+                Clear All
+              </Button>
+            )}
+          </Group>
 
-        <TextInput
-          placeholder="Search by URL, ID, player, or JSON..."
-          leftSection={<IconSearch size={14} />}
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              updateParams({ search: searchValue || undefined });
-            }
-          }}
-          size="sm"
-        />
-
-        <SimpleGrid cols={{ base: 1, xs: 2, md: 5 }} spacing="sm">
-          <Select
-            label="Mode"
-            placeholder="All modes"
-            data={modeOptions}
-            value={searchParams.get("modeFilter") || ""}
-            onChange={(value) =>
-              updateParams({ modeFilter: value || undefined })
-            }
-            clearable
-            size="sm"
-          />
-          <Select
-            label="Type"
-            placeholder="All types"
-            data={typeOptions}
-            value={searchParams.get("typeFilter") || ""}
-            onChange={(value) =>
-              updateParams({ typeFilter: value || undefined })
-            }
-            clearable
-            size="sm"
-          />
-          <Select
-            label="Status"
-            placeholder="All"
-            data={[
-              { value: "true", label: "Completed" },
-              { value: "false", label: "In Progress" },
-            ]}
-            value={searchParams.get("isCompleteFilter") || ""}
-            onChange={(value) =>
-              updateParams({ isCompleteFilter: value || undefined })
-            }
-            clearable
-            size="sm"
-          />
-          <Select
-            label="Phase"
-            placeholder="All phases"
-            data={phaseOptions}
-            value={searchParams.get("phaseFilter") || ""}
-            onChange={(value) =>
-              updateParams({ phaseFilter: value || undefined })
-            }
-            clearable
-            size="sm"
-          />
-          <Select
-            label="Page Size"
-            data={[
-              { value: "25", label: "25" },
-              { value: "50", label: "50" },
-              { value: "100", label: "100" },
-              { value: "250", label: "250" },
-            ]}
-            value={searchParams.get("pageSize") || "100"}
-            onChange={(value) =>
-              updateParams({ pageSize: value || "100" })
-            }
-            size="sm"
-          />
-        </SimpleGrid>
-
-        <Group justify="flex-end">
-          <Button
-            variant="subtle"
-            size="compact-xs"
-            color="dimmed"
-            rightSection={
-              <IconChevronDown
-                size={12}
-                style={{
-                  transition: "transform 0.2s",
-                  transform: filtersOpen ? "rotate(180deg)" : undefined,
-                }}
-              />
-            }
-            onClick={() => setFiltersOpen((v) => !v)}
-          >
-            Date Range
-          </Button>
-        </Group>
-
-        <Collapse in={filtersOpen}>
-          <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="sm">
-            <TextInput
-              label="Created After"
-              type="date"
-              value={searchParams.get("createdAfter") || ""}
-              onChange={(e) =>
-                updateParams({ createdAfter: e.currentTarget.value || undefined })
+          <TextInput
+            placeholder="Search by URL, ID, player, or JSON..."
+            leftSection={<IconSearch size={14} />}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                updateParams({ search: searchValue || undefined });
               }
+            }}
+            size="sm"
+          />
+
+          <div className={classes.filtersGrid}>
+            <Select
+              label="Mode"
+              placeholder="All modes"
+              data={modeOptions}
+              value={searchParams.get("modeFilter") || ""}
+              onChange={(value) =>
+                updateParams({ modeFilter: value || undefined })
+              }
+              clearable
               size="sm"
             />
-            <TextInput
-              label="Created Before"
-              type="date"
-              value={searchParams.get("createdBefore") || ""}
-              onChange={(e) =>
-                updateParams({ createdBefore: e.currentTarget.value || undefined })
+            <Select
+              label="Type"
+              placeholder="All types"
+              data={typeOptions}
+              value={searchParams.get("typeFilter") || ""}
+              onChange={(value) =>
+                updateParams({ typeFilter: value || undefined })
               }
+              clearable
               size="sm"
             />
-            <TextInput
-              label="Updated After"
-              type="date"
-              value={searchParams.get("updatedAfter") || ""}
-              onChange={(e) =>
-                updateParams({ updatedAfter: e.currentTarget.value || undefined })
+            <Select
+              label="Status"
+              placeholder="All"
+              data={[
+                { value: "true", label: "Completed" },
+                { value: "false", label: "In Progress" },
+              ]}
+              value={searchParams.get("isCompleteFilter") || ""}
+              onChange={(value) =>
+                updateParams({ isCompleteFilter: value || undefined })
               }
+              clearable
               size="sm"
             />
-            <TextInput
-              label="Updated Before"
-              type="date"
-              value={searchParams.get("updatedBefore") || ""}
-              onChange={(e) =>
-                updateParams({ updatedBefore: e.currentTarget.value || undefined })
+            <Select
+              label="Phase"
+              placeholder="All phases"
+              data={phaseOptions}
+              value={searchParams.get("phaseFilter") || ""}
+              onChange={(value) =>
+                updateParams({ phaseFilter: value || undefined })
               }
+              clearable
               size="sm"
             />
-          </SimpleGrid>
-        </Collapse>
-      </Stack>
+            <Select
+              label="Page Size"
+              data={[
+                { value: "25", label: "25" },
+                { value: "50", label: "50" },
+                { value: "100", label: "100" },
+                { value: "250", label: "250" },
+              ]}
+              value={searchParams.get("pageSize") || "100"}
+              onChange={(value) => updateParams({ pageSize: value || "100" })}
+              size="sm"
+            />
+          </div>
 
-      <Divider mb="lg" />
+          <Accordion variant="contained" radius="xs">
+            <Accordion.Item value="dates">
+              <Accordion.Control>
+                <Text size="sm" c="dimmed">
+                  Date range
+                </Text>
+              </Accordion.Control>
+              <Accordion.Panel>
+                <div className={classes.dateGrid}>
+                  {DATE_FILTERS.map((filter) => (
+                    <TextInput
+                      key={filter.param}
+                      label={filter.label}
+                      type="date"
+                      value={searchParams.get(filter.param) || ""}
+                      onChange={(e) =>
+                        updateParams({
+                          [filter.param]: e.currentTarget.value || undefined,
+                        })
+                      }
+                      size="sm"
+                    />
+                  ))}
+                </div>
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
+        </Stack>
+      </Paper>
 
-      {/* Table */}
       <Group justify="space-between" mb="xs">
         <Text size="sm" fw={500}>
           {filteredTotal.toLocaleString()} results
@@ -468,18 +469,25 @@ export default function AdminDraftsIndex() {
       </Group>
 
       <Table.ScrollContainer minWidth={900}>
-        <Table striped highlightOnHover>
+        <Table
+          striped
+          highlightOnHover
+          withTableBorder
+          withColumnBorders={false}
+        >
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Draft</Table.Th>
-              <SortTh column="mode" label="Mode" active={searchParams.get("sortBy")} icon={renderSortIcon("mode")} onClick={handleSortChange} />
-              <SortTh column="type" label="Type" active={searchParams.get("sortBy")} icon={renderSortIcon("type")} onClick={handleSortChange} />
-              <SortTh column="isComplete" label="Status" active={searchParams.get("sortBy")} icon={renderSortIcon("isComplete")} onClick={handleSortChange} />
-              <SortTh column="phase" label="Phase" active={searchParams.get("sortBy")} icon={renderSortIcon("phase")} onClick={handleSortChange} />
-              <SortTh column="progress" label="Progress" active={searchParams.get("sortBy")} icon={renderSortIcon("progress")} onClick={handleSortChange} />
-              <SortTh column="players" label="Players" active={searchParams.get("sortBy")} icon={renderSortIcon("players")} onClick={handleSortChange} />
-              <SortTh column="createdAt" label="Created" active={searchParams.get("sortBy")} icon={renderSortIcon("createdAt")} onClick={handleSortChange} />
-              <SortTh column="updatedAt" label="Updated" active={searchParams.get("sortBy")} icon={renderSortIcon("updatedAt")} onClick={handleSortChange} />
+              {SORT_COLUMNS.map(({ column, label }) => (
+                <SortTh
+                  key={column}
+                  column={column}
+                  label={label}
+                  active={searchParams.get("sortBy")}
+                  icon={renderSortIcon(column)}
+                  onClick={handleSortChange}
+                />
+              ))}
               <Table.Th>Actions</Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -605,7 +613,6 @@ export default function AdminDraftsIndex() {
         </Table>
       </Table.ScrollContainer>
 
-      {/* Pagination */}
       <Group justify="space-between" mt="md" wrap="wrap">
         <Text size="xs" c="dimmed">
           Showing {draftsData.length} of {filteredTotal.toLocaleString()}{" "}
@@ -623,6 +630,45 @@ export default function AdminDraftsIndex() {
   );
 }
 
+function StatPanel({
+  label,
+  value,
+  detail,
+  color,
+}: {
+  label: string;
+  value: string;
+  detail?: string;
+  color: string;
+}) {
+  return (
+    <Paper
+      withBorder
+      radius="xs"
+      p="sm"
+      bg="dark.7"
+      style={{ borderTopColor: `var(--mantine-color-${color}-6)` }}
+    >
+      <Text size="xs" c="dimmed" tt="uppercase" lts="0.08em">
+        {label}
+      </Text>
+      <Text
+        size="xl"
+        fw={700}
+        ff="var(--mantine-font-family-headings)"
+        c={color}
+      >
+        {value}
+      </Text>
+      {detail && (
+        <Text size="xs" c="dimmed">
+          {detail}
+        </Text>
+      )}
+    </Paper>
+  );
+}
+
 function SortTh({
   column,
   label,
@@ -633,18 +679,22 @@ function SortTh({
   column: SortBy;
   label: string;
   active: string | null;
-  icon: React.ReactNode;
+  icon: ReactNode;
   onClick: (column: SortBy) => void;
 }) {
   const isActive = active === column;
   return (
     <Table.Th
-      className={classes.sortable}
-      data-active={isActive || undefined}
+      c={isActive ? "blue.4" : undefined}
       onClick={() => onClick(column)}
+      style={{ cursor: "pointer", userSelect: "none" }}
     >
-      {label}
-      {icon}
+      <Group gap={4} wrap="nowrap">
+        <Text component="span" size="xs" fw={700}>
+          {label}
+        </Text>
+        {icon}
+      </Group>
     </Table.Th>
   );
 }

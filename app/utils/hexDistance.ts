@@ -22,11 +22,8 @@ function hasAvoidableAnomaly(map: TiMap, position: number): boolean {
  * Edges map: position -> (neighbor position -> cost)
  *
  * Cost model (destination-based):
- * - Moving TO a hyperlane tile = 0 cost (entering the hyperlane network is free)
  * - Moving TO a non-hyperlane tile = 1 cost (arriving at a system/home)
- *
- * This means chains of hyperlanes can be traversed for free, but exiting costs 1.
- * Example: Home → Hyperlane → Hyperlane → System = 0 + 0 + 1 = 1 total
+ * - Moving TO a hyperlane tile = 0 cost when a lane pair exits into one
  */
 export type HexGraph = {
   edges: Map<number, Map<number, number>>;
@@ -138,34 +135,6 @@ function getMovementCost(map: TiMap, destPosition: number): number {
 }
 
 /**
- * Check if a position is on a connected side of a hyperlane.
- * Returns true if the hyperlane at hyperlanePos has a corridor connecting to neighborPos.
- */
-function isOnHyperlaneCorridor(
-  map: TiMap,
-  hyperlanePos: number,
-  neighborPos: number
-): boolean {
-  const hyperlaneData = getHyperlaneData(map, hyperlanePos);
-  if (!hyperlaneData) return false;
-
-  const rotatedConnections = getRotatedHyperlanes(
-    hyperlaneData.hyperlanes,
-    hyperlaneData.rotation
-  );
-
-  // Check if neighborPos is at any of the connected sides
-  for (const [sideA, sideB] of rotatedConnections) {
-    const neighborAtA = getNeighborAtDirection(map, hyperlanePos, sideA);
-    const neighborAtB = getNeighborAtDirection(map, hyperlanePos, sideB);
-    if (neighborPos === neighborAtA || neighborPos === neighborAtB) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
  * Check if a tile at the given position is a hyperlane.
  */
 function isHyperlaneTile(map: TiMap, position: number): boolean {
@@ -194,6 +163,137 @@ function getHyperlaneData(
   return { hyperlanes: system.hyperlanes, rotation };
 }
 
+function addEdge(
+  edges: Map<number, Map<number, number>>,
+  map: TiMap,
+  from: number,
+  to: number,
+) {
+  edges.get(from)!.set(to, getMovementCost(map, to));
+}
+
+function getOppositeSide(side: number): number {
+  return (side + 3) % 6;
+}
+
+function resolveHyperlaneEntry(
+  map: TiMap,
+  hyperlanePosition: number,
+  entrySide: number,
+  includeOpenTiles: boolean,
+  excludedIndices: Set<number>,
+  visited: Set<string>,
+): number[] {
+  const key = `${hyperlanePosition}:${entrySide}`;
+  if (visited.has(key)) return [];
+
+  const hyperlaneData = getHyperlaneData(map, hyperlanePosition);
+  if (!hyperlaneData) return [];
+
+  const nextVisited = new Set(visited);
+  nextVisited.add(key);
+
+  const rotatedConnections = getRotatedHyperlanes(
+    hyperlaneData.hyperlanes,
+    hyperlaneData.rotation,
+  );
+
+  return rotatedConnections.flatMap(([sideA, sideB]) => {
+    if (sideA === entrySide) {
+      return resolveHyperlaneExit(
+        map,
+        hyperlanePosition,
+        sideB,
+        includeOpenTiles,
+        excludedIndices,
+        nextVisited,
+      );
+    }
+
+    if (sideB === entrySide) {
+      return resolveHyperlaneExit(
+        map,
+        hyperlanePosition,
+        sideA,
+        includeOpenTiles,
+        excludedIndices,
+        nextVisited,
+      );
+    }
+
+    return [];
+  });
+}
+
+function resolveHyperlaneExit(
+  map: TiMap,
+  hyperlanePosition: number,
+  exitSide: number,
+  includeOpenTiles: boolean,
+  excludedIndices: Set<number>,
+  visited: Set<string>,
+): number[] {
+  const neighbor = getNeighborAtDirection(map, hyperlanePosition, exitSide);
+
+  if (neighbor === -1 || neighbor >= map.length) return [];
+  if (excludedIndices.has(neighbor)) return [];
+  if (!isPassableTile(map, neighbor, includeOpenTiles)) return [];
+  if (!isHyperlaneTile(map, neighbor)) return [neighbor];
+
+  return resolveHyperlaneEntry(
+    map,
+    neighbor,
+    getOppositeSide(exitSide),
+    includeOpenTiles,
+    excludedIndices,
+    visited,
+  );
+}
+
+function addHyperlanePairEdges(
+  edges: Map<number, Map<number, number>>,
+  map: TiMap,
+  hyperlanePosition: number,
+  includeOpenTiles: boolean,
+  excludedIndices: Set<number> = new Set(),
+) {
+  if (excludedIndices.has(hyperlanePosition)) return;
+
+  const hyperlaneData = getHyperlaneData(map, hyperlanePosition);
+  if (!hyperlaneData) return;
+
+  const rotatedConnections = getRotatedHyperlanes(
+    hyperlaneData.hyperlanes,
+    hyperlaneData.rotation,
+  );
+
+  for (const [sideA, sideB] of rotatedConnections) {
+    const exitsA = resolveHyperlaneExit(
+      map,
+      hyperlanePosition,
+      sideA,
+      includeOpenTiles,
+      excludedIndices,
+      new Set(),
+    );
+    const exitsB = resolveHyperlaneExit(
+      map,
+      hyperlanePosition,
+      sideB,
+      includeOpenTiles,
+      excludedIndices,
+      new Set(),
+    );
+
+    for (const exitA of exitsA) {
+      for (const exitB of exitsB) {
+        addEdge(edges, map, exitA, exitB);
+        addEdge(edges, map, exitB, exitA);
+      }
+    }
+  }
+}
+
 /**
  * Options for building the hex graph.
  */
@@ -209,14 +309,9 @@ type BuildHexGraphOptions = {
 /**
  * Build a hex graph from the map, accounting for hyperlanes.
  *
- * Cost model (destination-based):
- * - Moving TO a hyperlane = 0 (free to enter/traverse)
- * - Moving TO a non-hyperlane = 1 (costs 1 to arrive)
- *
  * Connectivity rules:
  * - Non-hyperlane tiles connect to adjacent non-hyperlane tiles
- * - Non-hyperlane tiles connect to adjacent hyperlanes ONLY via the hyperlane's corridors
- * - Hyperlane tiles connect to neighbors on their corridor sides only
+ * - Hyperlane lane pairs connect their two neighboring exits directly
  *
  * @param options.includeOpenTiles - If true, OPEN tiles are treated as traversable
  */
@@ -229,52 +324,24 @@ export function buildHexGraph(map: TiMap, options: BuildHexGraphOptions = {}): H
     edges.set(i, new Map());
   }
 
-  // Process all passable tiles
+  // Process physical adjacency between non-hyperlane tiles.
   for (let position = 0; position < map.length; position++) {
     if (!isPassableTile(map, position, includeOpenTiles)) continue;
 
+    if (isHyperlaneTile(map, position)) continue;
+
+    const neighbors = getAllNeighbors(map, position);
+    for (const neighbor of neighbors) {
+      if (!isPassableTile(map, neighbor, includeOpenTiles)) continue;
+      if (isHyperlaneTile(map, neighbor)) continue;
+
+      addEdge(edges, map, position, neighbor);
+    }
+  }
+
+  for (let position = 0; position < map.length; position++) {
     if (isHyperlaneTile(map, position)) {
-      // Hyperlane tile: only connect to neighbors on corridor sides
-      const hyperlaneData = getHyperlaneData(map, position);
-      if (!hyperlaneData) continue;
-
-      const rotatedConnections = getRotatedHyperlanes(
-        hyperlaneData.hyperlanes,
-        hyperlaneData.rotation
-      );
-
-      // Collect all sides that are part of corridors
-      const connectedSides = new Set<number>();
-      for (const [sideA, sideB] of rotatedConnections) {
-        connectedSides.add(sideA);
-        connectedSides.add(sideB);
-      }
-
-      // Add edges to neighbors on connected sides
-      for (const side of connectedSides) {
-        const neighbor = getNeighborAtDirection(map, position, side);
-        if (neighbor === -1 || neighbor >= map.length) continue;
-        if (!isPassableTile(map, neighbor, includeOpenTiles)) continue;
-
-        // Cost based on destination type
-        const cost = getMovementCost(map, neighbor);
-        edges.get(position)!.set(neighbor, cost);
-      }
-    } else {
-      // Non-hyperlane tile: connect to adjacent passable tiles
-      const neighbors = getAllNeighbors(map, position);
-      for (const neighbor of neighbors) {
-        if (!isPassableTile(map, neighbor, includeOpenTiles)) continue;
-
-        // If neighbor is a hyperlane, only connect if we're on a corridor side
-        if (isHyperlaneTile(map, neighbor)) {
-          if (!isOnHyperlaneCorridor(map, neighbor, position)) continue;
-        }
-
-        // Cost based on destination type
-        const cost = getMovementCost(map, neighbor);
-        edges.get(position)!.set(neighbor, cost);
-      }
+      addHyperlanePairEdges(edges, map, position, includeOpenTiles);
     }
   }
 
@@ -515,56 +582,27 @@ export function buildHexGraphWithExclusions(
     edges.set(i, new Map());
   }
 
-  // Process all passable tiles that are NOT excluded
+  // Process physical adjacency between non-hyperlane tiles that are NOT excluded.
   for (let position = 0; position < map.length; position++) {
     // Skip excluded positions (they won't have outgoing edges)
     if (excludedIndices.has(position)) continue;
     if (!isPassableTile(map, position)) continue;
 
+    if (isHyperlaneTile(map, position)) continue;
+
+    const neighbors = getAllNeighbors(map, position);
+    for (const neighbor of neighbors) {
+      if (excludedIndices.has(neighbor)) continue;
+      if (!isPassableTile(map, neighbor)) continue;
+      if (isHyperlaneTile(map, neighbor)) continue;
+
+      addEdge(edges, map, position, neighbor);
+    }
+  }
+
+  for (let position = 0; position < map.length; position++) {
     if (isHyperlaneTile(map, position)) {
-      // Hyperlane tile: only connect to neighbors on corridor sides
-      const hyperlaneData = getHyperlaneData(map, position);
-      if (!hyperlaneData) continue;
-
-      const rotatedConnections = getRotatedHyperlanes(
-        hyperlaneData.hyperlanes,
-        hyperlaneData.rotation
-      );
-
-      // Collect all sides that are part of corridors
-      const connectedSides = new Set<number>();
-      for (const [sideA, sideB] of rotatedConnections) {
-        connectedSides.add(sideA);
-        connectedSides.add(sideB);
-      }
-
-      // Add edges to neighbors on connected sides (excluding excluded neighbors)
-      for (const side of connectedSides) {
-        const neighbor = getNeighborAtDirection(map, position, side);
-        if (neighbor === -1 || neighbor >= map.length) continue;
-        if (excludedIndices.has(neighbor)) continue; // Skip excluded neighbors
-        if (!isPassableTile(map, neighbor)) continue;
-
-        // Cost based on destination type
-        const cost = getMovementCost(map, neighbor);
-        edges.get(position)!.set(neighbor, cost);
-      }
-    } else {
-      // Non-hyperlane tile: connect to adjacent passable tiles
-      const neighbors = getAllNeighbors(map, position);
-      for (const neighbor of neighbors) {
-        if (excludedIndices.has(neighbor)) continue; // Skip excluded neighbors
-        if (!isPassableTile(map, neighbor)) continue;
-
-        // If neighbor is a hyperlane, only connect if we're on a corridor side
-        if (isHyperlaneTile(map, neighbor)) {
-          if (!isOnHyperlaneCorridor(map, neighbor, position)) continue;
-        }
-
-        // Cost based on destination type
-        const cost = getMovementCost(map, neighbor);
-        edges.get(position)!.set(neighbor, cost);
-      }
+      addHyperlanePairEdges(edges, map, position, false, excludedIndices);
     }
   }
 

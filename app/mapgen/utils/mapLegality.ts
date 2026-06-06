@@ -10,7 +10,7 @@ import { getAllNeighbors } from "~/utils/hexDistance";
  */
 export function areSystemsCompatibleAdjacent(
   systemIdA: SystemId,
-  systemIdB: SystemId
+  systemIdB: SystemId,
 ): boolean {
   const systemA = systemData[systemIdA];
   const systemB = systemData[systemIdB];
@@ -20,7 +20,7 @@ export function areSystemsCompatibleAdjacent(
   // Check wormhole rule: same wormholes cannot be adjacent
   if (systemA.wormholes.length > 0 && systemB.wormholes.length > 0) {
     const hasMatchingWormhole = systemA.wormholes.some((wh) =>
-      systemB.wormholes.includes(wh)
+      systemB.wormholes.includes(wh),
     );
     if (hasMatchingWormhole) return false;
   }
@@ -41,13 +41,13 @@ export function isPlacementLegal(
   map: Map,
   tileIdx: number,
   systemId: SystemId,
-  adjacencyMap?: globalThis.Map<number, number[]>
+  adjacencyMap?: globalThis.Map<number, number[]>,
 ): boolean {
   const system = systemData[systemId];
   if (!system) return false;
 
   const adjacentIndices = adjacencyMap
-    ? adjacencyMap.get(tileIdx) ?? []
+    ? (adjacencyMap.get(tileIdx) ?? [])
     : getAllNeighbors(map, tileIdx);
 
   for (const adjIdx of adjacentIndices) {
@@ -63,9 +63,11 @@ export function isPlacementLegal(
 }
 
 /**
- * Check if the entire map is legal (no illegal adjacencies).
+ * Count illegal adjacency pairs on the map.
  */
-export function isMapLegal(map: Map): boolean {
+export function countMapLegalityViolations(map: Map): number {
+  let violations = 0;
+
   for (let i = 0; i < map.length; i++) {
     const tile = map[i];
     if (tile.type !== "SYSTEM") continue;
@@ -73,16 +75,25 @@ export function isMapLegal(map: Map): boolean {
     const adjacentIndices = getAllNeighbors(map, i);
 
     for (const adjIdx of adjacentIndices) {
+      if (adjIdx <= i) continue;
+
       const adjTile = map[adjIdx];
       if (adjTile.type !== "SYSTEM") continue;
 
       if (!areSystemsCompatibleAdjacent(tile.systemId, adjTile.systemId)) {
-        return false;
+        violations++;
       }
     }
   }
 
-  return true;
+  return violations;
+}
+
+/**
+ * Check if the entire map is legal (no illegal adjacencies).
+ */
+export function isMapLegal(map: Map): boolean {
+  return countMapLegalityViolations(map) === 0;
 }
 
 /**

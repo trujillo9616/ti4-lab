@@ -25,7 +25,7 @@ function stripEphemeralDraftFields(draft: Draft): Draft {
 
 type SavedDraft = {
   id: string;
-  data: Draft;
+  data?: Draft;
   urlName: string | null;
   type: string | null;
   isComplete: boolean | null;
@@ -40,6 +40,7 @@ type SavedDraft = {
   progressPercent: number;
   playerCount: number;
   playerNames: string;
+  playerNamesSearch: string | null;
 };
 
 export type DraftMode = "base" | "twilightsFall" | "texasStyle" | "presetMap";
@@ -112,32 +113,8 @@ type FindDraftsParams = {
   createdBefore?: string;
   updatedAfter?: string;
   updatedBefore?: string;
+  includeData?: boolean;
 };
-
-const draftModeExpr = sql<string>`coalesce(json_extract(${drafts.data}, '$.settings.draftGameMode'), 'base')`;
-const selectionsCountExpr = sql<number>`coalesce(json_array_length(json_extract(${drafts.data}, '$.selections')), 0)`;
-const pickOrderCountExpr = sql<number>`coalesce(json_array_length(json_extract(${drafts.data}, '$.pickOrder')), 0)`;
-const playersCountExpr = sql<number>`coalesce(json_array_length(json_extract(${drafts.data}, '$.players')), 0)`;
-const currentPickExpr = sql`json_extract(${drafts.data}, '$.pickOrder[' || ${selectionsCountExpr} || ']')`;
-const currentPickTypeExpr = sql<string>`json_type(${currentPickExpr})`;
-const currentPhaseExpr = sql<string>`json_extract(${drafts.data}, '$.pickOrder[' || ${selectionsCountExpr} || '].phase')`;
-const banPerPlayerExpr = sql<number>`coalesce(json_extract(${drafts.data}, '$.settings.modifiers.banFactions.numFactions'), 0)`;
-const banNeededExpr = sql<number>`${banPerPlayerExpr} * ${playersCountExpr}`;
-const progressPercentExpr = sql<number>`
-  case
-    when ${pickOrderCountExpr} > 0 then (100.0 * ${selectionsCountExpr} / ${pickOrderCountExpr})
-    else 0
-  end
-`;
-const draftPhaseExpr = sql<string>`
-  case
-    when ${drafts.isComplete} = 1 then 'complete'
-    when ${banPerPlayerExpr} > 0 and ${selectionsCountExpr} < ${banNeededExpr} then 'ban'
-    when ${currentPickTypeExpr} = 'object' then coalesce(${currentPhaseExpr}, 'standardPick')
-    when ${draftModeExpr} = 'texasStyle' then 'texasMapBuild'
-    else 'standardPick'
-  end
-`;
 
 function buildTypeFilterCondition(typeFilter: string): SQL {
   if (typeFilter === "milty") {
@@ -174,6 +151,29 @@ function deriveDraftPhase(draft: Draft, isComplete: boolean): DraftPhase {
   return "standardPick";
 }
 
+export function deriveDraftMetadata(draft: Draft) {
+  const selectionsCount = draft.selections?.length ?? 0;
+  const pickOrderCount = draft.pickOrder?.length ?? 0;
+  const isComplete = selectionsCount === pickOrderCount;
+  const mode = deriveDraftMode(draft);
+  const phase = deriveDraftPhase(draft, isComplete);
+  const playerNames = draft.players?.map((p) => p.name).join(", ") ?? "";
+
+  return {
+    type: draft.settings?.type || null,
+    isComplete,
+    mode,
+    phase,
+    selectionsCount,
+    pickOrderCount,
+    progressPercent:
+      pickOrderCount > 0 ? (100 * selectionsCount) / pickOrderCount : 0,
+    playerCount: draft.players?.length ?? 0,
+    playerNames,
+    playerNamesSearch: playerNames.toLowerCase(),
+  };
+}
+
 export async function findDrafts({
   page = 1,
   pageSize = 100,
@@ -188,6 +188,7 @@ export async function findDrafts({
   createdBefore,
   updatedAfter,
   updatedBefore,
+  includeData = false,
 }: FindDraftsParams = {}): Promise<PaginatedDrafts> {
   const offset = (page - 1) * pageSize;
   const scopedConditions: SQL[] = [];
@@ -197,7 +198,7 @@ export async function findDrafts({
     scopedConditions.push(buildTypeFilterCondition(typeFilter));
   }
   if (modeFilter) {
-    scopedConditions.push(sql`${draftModeExpr} = ${modeFilter}`);
+    scopedConditions.push(eq(drafts.mode, modeFilter));
   }
   if (search?.trim()) {
     const searchLike = `%${search.trim().toLowerCase()}%`;
@@ -205,6 +206,7 @@ export async function findDrafts({
       sql`(
         lower(${drafts.id}) like ${searchLike}
         or lower(coalesce(${drafts.urlName}, '')) like ${searchLike}
+        or lower(coalesce(${drafts.playerNamesSearch}, '')) like ${searchLike}
         or lower(cast(${drafts.data} as text)) like ${searchLike}
       )`,
     );
@@ -227,7 +229,7 @@ export async function findDrafts({
     allConditions.push(eq(drafts.isComplete, isCompleteFilter));
   }
   if (phaseFilter) {
-    allConditions.push(sql`${draftPhaseExpr} = ${phaseFilter}`);
+    allConditions.push(eq(drafts.phase, phaseFilter));
   }
 
   const orderColumn =
@@ -238,17 +240,37 @@ export async function findDrafts({
         : sortBy === "type"
           ? drafts.type
           : sortBy === "mode"
-            ? draftModeExpr
+            ? drafts.mode
             : sortBy === "phase"
-              ? draftPhaseExpr
+              ? drafts.phase
               : sortBy === "progress"
-                ? progressPercentExpr
+                ? drafts.progressPercent
                 : sortBy === "players"
-                  ? playersCountExpr
+                  ? drafts.playerCount
                   : drafts.isComplete;
 
   const orderFn = sortOrder === "asc" ? sql`${orderColumn} ASC` : desc(orderColumn);
-  let query = db.select().from(drafts);
+  const selectDraftListFields = {
+    id: drafts.id,
+    urlName: drafts.urlName,
+    type: drafts.type,
+    isComplete: drafts.isComplete,
+    imageUrl: drafts.imageUrl,
+    incompleteImageUrl: drafts.incompleteImageUrl,
+    createdAt: drafts.createdAt,
+    updatedAt: drafts.updatedAt,
+    mode: drafts.mode,
+    phase: drafts.phase,
+    selectionsCount: drafts.selectionsCount,
+    pickOrderCount: drafts.pickOrderCount,
+    progressPercent: drafts.progressPercent,
+    playerCount: drafts.playerCount,
+    playerNames: drafts.playerNames,
+    playerNamesSearch: drafts.playerNamesSearch,
+    data: includeData ? drafts.data : sql<null>`null`,
+  };
+
+  let query = db.select(selectDraftListFields).from(drafts);
   if (allConditions.length > 0) {
     query = query.where(sql`${sql.join(allConditions, sql` AND `)}`) as typeof query;
   }
@@ -290,44 +312,32 @@ export async function findDrafts({
       .groupBy(drafts.type),
     db
       .select({
-        mode: draftModeExpr,
+        mode: drafts.mode,
         count: sql<number>`count(*)`,
       })
       .from(drafts)
       .where(scopeWhere)
-      .groupBy(draftModeExpr),
+      .groupBy(drafts.mode),
     db
       .select({
-        phase: draftPhaseExpr,
+        phase: drafts.phase,
         count: sql<number>`count(*)`,
       })
       .from(drafts)
       .where(scopeWhere)
-      .groupBy(draftPhaseExpr),
+      .groupBy(drafts.phase),
   ]);
 
   const data = draftsData.map((draft) => ({
-    ...(() => {
-      const parsedDraft = JSON.parse(draft.data as string) as Draft;
-      const selectionsCount = parsedDraft.selections?.length ?? 0;
-      const pickOrderCount = parsedDraft.pickOrder?.length ?? 0;
-      const isComplete = !!draft.isComplete;
-      const mode = deriveDraftMode(parsedDraft);
-      const phase = deriveDraftPhase(parsedDraft, isComplete);
-
-      return {
-        ...draft,
-        data: parsedDraft,
-        mode,
-        phase,
-        selectionsCount,
-        pickOrderCount,
-        progressPercent:
-          pickOrderCount > 0 ? (100 * selectionsCount) / pickOrderCount : 0,
-        playerCount: parsedDraft.players?.length ?? 0,
-        playerNames: parsedDraft.players?.map((p) => p.name).join(", ") ?? "",
-      };
-    })(),
+    ...draft,
+    data: draft.data ? (JSON.parse(draft.data as string) as Draft) : undefined,
+    mode: draft.mode as DraftMode,
+    phase: draft.phase as DraftPhase,
+    selectionsCount: draft.selectionsCount ?? 0,
+    pickOrderCount: draft.pickOrderCount ?? 0,
+    progressPercent: draft.progressPercent ?? 0,
+    playerCount: draft.playerCount ?? 0,
+    playerNames: draft.playerNames ?? "",
   }));
 
   const totalPages = Math.ceil(filteredCount[0].count / pageSize);
@@ -344,14 +354,14 @@ export async function findDrafts({
 
   const draftsByMode: Record<string, number> = {};
   modeStats.forEach((stat) => {
-    const mode = stat.mode || "base";
-    draftsByMode[mode] = (draftsByMode[mode] || 0) + stat.count;
+    if (!stat.mode) return;
+    draftsByMode[stat.mode] = (draftsByMode[stat.mode] || 0) + stat.count;
   });
 
   const draftsByPhase: Record<string, number> = {};
   phaseStats.forEach((stat) => {
-    const phase = stat.phase || "standardPick";
-    draftsByPhase[phase] = (draftsByPhase[phase] || 0) + stat.count;
+    if (!stat.phase) return;
+    draftsByPhase[stat.phase] = (draftsByPhase[stat.phase] || 0) + stat.count;
   });
 
   return {
@@ -397,17 +407,14 @@ export async function generateUniquePrettyUrl() {
 export async function createDraft(draft: Draft, presetUrl?: string) {
   const id = uuidv4().toString();
   const prettyUrl = await getPrettyUrl(presetUrl);
-  const type = draft.settings?.type || null;
-  const isComplete =
-    draft.selections?.length === draft.pickOrder?.length;
+  const metadata = deriveDraftMetadata(draft);
 
   db.insert(drafts)
     .values({
       id,
       urlName: prettyUrl,
       data: JSON.stringify(stripEphemeralDraftFields(draft)),
-      type,
-      isComplete,
+      ...metadata,
     })
     .run();
 
@@ -439,9 +446,7 @@ export async function updateDraftUrl(id: string, urlName: string) {
 }
 
 export async function updateDraft(id: string, draftData: Draft) {
-  const type = draftData.settings?.type || null;
-  const newIsComplete =
-    draftData.selections?.length === draftData.pickOrder?.length;
+  const metadata = deriveDraftMetadata(draftData);
 
   // Get old completion status
   const existingDraft = await draftById(id);
@@ -450,15 +455,14 @@ export async function updateDraft(id: string, draftData: Draft) {
   db.update(drafts)
     .set({
       data: JSON.stringify(stripEphemeralDraftFields(draftData)),
-      type,
-      isComplete: newIsComplete,
+      ...metadata,
       updatedAt: sql`CURRENT_TIMESTAMP`,
     })
     .where(eq(drafts.id, id))
     .run();
 
   // If draft just became complete, enqueue complete image generation
-  if (!oldIsComplete && newIsComplete && existingDraft.urlName) {
+  if (!oldIsComplete && metadata.isComplete && existingDraft.urlName) {
     enqueueImageJob(id, existingDraft.urlName, true);
   }
 }

@@ -7,7 +7,8 @@ import { systemStats } from "~/utils/system";
 export function calculateMapStats(map: Map) {
   const stats: SystemStats[] = [];
 
-  map.forEach((t) => {
+  map.forEach((t, idx) => {
+    if (idx === 0) return;
     if (t.type !== "SYSTEM") return;
     stats.push(systemStats(systemData[t.systemId]));
   });

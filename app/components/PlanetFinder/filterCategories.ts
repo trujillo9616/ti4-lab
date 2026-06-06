@@ -59,6 +59,7 @@ export const FILTER_CATEGORIES: FilterCategory[] = [
       { id: "asteroid", label: "Asteroid", searchTerm: "asteroid field", color: "orange" },
       { id: "rift", label: "Gravity Rift", searchTerm: "gravity rift", color: "orange" },
       { id: "supernova", label: "Supernova", searchTerm: "supernova", color: "orange" },
+      { id: "entropic-scar", label: "Entropic Scar", searchTerm: "entropic scar", color: "orange" },
     ],
   },
   {

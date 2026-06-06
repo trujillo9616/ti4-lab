@@ -18,6 +18,14 @@ export const drafts = sqliteTable(
     data: blob("data").notNull(),
     type: text("type"),
     isComplete: integer("isComplete", { mode: "boolean" }),
+    mode: text("mode"),
+    phase: text("phase"),
+    selectionsCount: integer("selectionsCount"),
+    pickOrderCount: integer("pickOrderCount"),
+    progressPercent: real("progressPercent"),
+    playerCount: integer("playerCount"),
+    playerNames: text("playerNames"),
+    playerNamesSearch: text("playerNamesSearch"),
     imageUrl: text("imageUrl"),
     incompleteImageUrl: text("incompleteImageUrl"),
     createdAt: text("createdAt")
@@ -31,6 +39,19 @@ export const drafts = sqliteTable(
     urlNameIdx: index("urlName_index").on(table.urlName),
     typeIdx: index("type_index").on(table.type),
     isCompleteIdx: index("isComplete_index").on(table.isComplete),
+    modeIdx: index("drafts_mode_index").on(table.mode),
+    phaseIdx: index("drafts_phase_index").on(table.phase),
+    playerCountIdx: index("drafts_player_count_index").on(table.playerCount),
+    modeCompleteUpdatedIdx: index("drafts_mode_complete_updated_index").on(
+      table.mode,
+      table.isComplete,
+      table.updatedAt,
+    ),
+    phaseCompleteUpdatedIdx: index("drafts_phase_complete_updated_index").on(
+      table.phase,
+      table.isComplete,
+      table.updatedAt,
+    ),
   }),
 );
 

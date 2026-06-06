@@ -17,6 +17,7 @@ import { draftConfig } from "~/draft";
 import { factionSystems } from "~/data/systemData";
 import { factions as allFactions } from "~/data/factionData";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
+import { encodeTtsMapString } from "~/mapgen/utils/mapStringCodec";
 
 // check if the player name is either empty or Player N where 'n' is a number
 const isDefaultName = (name: string) => {
@@ -344,22 +345,13 @@ export const hydratedMapStringAtom = atom((get) => {
   const hydratedMap = get(hydratedMapAtom);
   const hydratedPlayers = get(hydratedPlayersAtom);
 
-  // slice to remove mecatol
-  return hydratedMap
-    .slice(1, hydratedMap.length)
-    .map((t) => {
-      if (t.type === "HOME") {
-        const player = hydratedPlayers.find((p) => p.id === t.playerId);
-
-        const faction = player?.homeSystemFactionId ?? player?.faction;
-
-        if (faction === undefined) return "0";
-        return factionSystems[faction]?.id ?? "0";
-      }
-      if (t.type === "SYSTEM") return t.systemId;
-      return "-1";
-    })
-    .join(" ");
+  return encodeTtsMapString(hydratedMap, {
+    homeSystemId: (tile) => {
+      const player = hydratedPlayers.find((p) => p.id === tile.playerId);
+      const faction = player?.homeSystemFactionId ?? player?.faction;
+      return faction ? factionSystems[faction]?.id : "0";
+    },
+  });
 });
 
 export function useHydratedDraft() {

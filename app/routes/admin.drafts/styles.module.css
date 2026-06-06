@@ -1,53 +1,39 @@
-.page {
-  padding: var(--mantine-spacing-xl) 0;
-}
-
-.title {
-  font-family: "Orbitron", sans-serif;
-  font-weight: 700;
-  font-size: 1.5rem;
-  letter-spacing: 0.03em;
-  color: var(--mantine-color-gray-1);
-  margin: 0;
-}
-
-/* ── Stat cards ── */
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--mantine-spacing-sm);
   margin-bottom: var(--mantine-spacing-lg);
 }
 
-@media (max-width: 48em) {
-  .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
+.filtersGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mantine-spacing-sm);
+}
+
+.dateGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mantine-spacing-sm);
+}
+
+@media (min-width: 36em) {
+  .filtersGrid,
+  .dateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.statCard {
-  background: var(--mantine-color-dark-7);
-  border: 1px solid var(--mantine-color-dark-4);
-  border-top: 2px solid var(--stat-accent, var(--mantine-color-dark-4));
-  border-radius: 4px;
-  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
-}
+@media (min-width: 48em) {
+  .statsGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 
-.statValue {
-  font-family: "Orbitron", sans-serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--mantine-color-gray-1);
-}
+  .filtersGrid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 
-/* ── Sortable table headers ── */
-.sortable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.sortable:hover,
-.sortable[data-active] {
-  color: var(--mantine-color-blue-4);
+  .dateGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }

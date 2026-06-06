@@ -71,6 +71,13 @@
       "when": 1770048141465,
       "tag": "0009_lovely_thunderbolts",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1780758132821,
+      "tag": "0010_lucky_toxin",
+      "breakpoints": true
     }
   ]
 }

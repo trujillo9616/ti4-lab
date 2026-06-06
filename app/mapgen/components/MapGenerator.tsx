@@ -19,7 +19,7 @@ import { Map, MAP_INTERACTIONS } from "~/components/Map";
 import { MainAppShell } from "~/components/MainAppShell";
 import { RawSystemTile } from "~/components/tiles/SystemTile";
 import { useState, useMemo, useEffect } from "react";
-import { Tile, GameSet, SystemId } from "~/types";
+import { Tile, GameSet } from "~/types";
 import {
   DndContext,
   DragEndEvent,
@@ -54,7 +54,12 @@ import {
 } from "../utils/mapToDraft";
 import { autoCompleteMap } from "../utils/mapCompletion";
 import { useMapStats } from "../utils/mapStats";
-import { encodeMapString, decodeMapString, inferGameSetsFromTiles } from "../utils/mapStringCodec";
+import {
+  encodeMapString,
+  decodeMapString,
+  encodeTtsMapString,
+  decodeTtsMapString,
+} from "../utils/mapStringCodec";
 import {
   getAllSliceValues,
   getAllSliceStats,
@@ -156,16 +161,8 @@ function MapGeneratorContent() {
     return encodeMapString(map);
   }, [map]);
 
-  // TTS string for import/export (space-separated system IDs)
   const ttsMapString = useMemo(() => {
-    return map
-      .slice(1)
-      .map((tile) => {
-        if (tile.type === "HOME") return "0";
-        if (tile.type === "SYSTEM") return tile.systemId;
-        return "-1";
-      })
-      .join(" ");
+    return encodeTtsMapString(map);
   }, [map]);
 
   const hasSystems = useMemo(() => {
@@ -268,82 +265,22 @@ function MapGeneratorContent() {
       return;
     }
 
-    const systemIds = ttsString
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean) as SystemId[];
-
-    if (systemIds.length === 0) {
+    const decoded = decodeTtsMapString(ttsString);
+    if (!decoded) {
       notifications.show({
         title: "Invalid input",
-        message: "TTS string contains no system IDs",
+        message: "TTS string is not a valid map",
         color: "red",
       });
       return;
     }
 
-    const config = mapConfigs[mapConfigId];
-    const presetTileIndices = new Set(
-      Object.keys(config.presetTiles).map(Number),
-    );
+    setGameSets(decoded.gameSets);
+    setRingCount(decoded.ringCount);
+    setMap(decoded.map);
 
-    clearMap();
-
-    const clearedMap = useMapBuilder.getState().state.map;
-    const actualSystemIds = systemIds.filter((id) => id !== "0" && id !== "-1");
-    const placeableCount = clearedMap.filter(
-      (tile, idx) =>
-        idx !== 0 &&
-        tile.type === "OPEN" &&
-        !config.homeIdxInMapString.includes(idx) &&
-        !config.closedMapTiles.includes(idx) &&
-        !presetTileIndices.has(idx),
-    ).length;
-
-    if (actualSystemIds.length > placeableCount) {
-      notifications.show({
-        title: "Too many systems",
-        message: `TTS string contains ${actualSystemIds.length} systems, but only ${placeableCount} placeable positions available`,
-        color: "yellow",
-      });
-    }
-
-    const inferredSets = inferGameSetsFromTiles(systemIds);
-    setGameSets(inferredSets);
-
-    systemIds.forEach((systemId, ttsPosition) => {
-      const mapIdx = ttsPosition + 1;
-
-      if (mapIdx >= clearedMap.length) {
-        return;
-      }
-
-      if (systemId === "0" || systemId === "-1") {
-        return;
-      }
-
-      if (
-        mapIdx === 0 ||
-        config.homeIdxInMapString.includes(mapIdx) ||
-        config.closedMapTiles.includes(mapIdx) ||
-        presetTileIndices.has(mapIdx)
-      ) {
-        return;
-      }
-
-      if (systemData[systemId]) {
-        addSystemToMap(mapIdx, systemId);
-      } else {
-        notifications.show({
-          title: "Invalid system ID",
-          message: `System ID "${systemId}" not found`,
-          color: "yellow",
-        });
-      }
-    });
-
-    const systemsPlaced = systemIds.filter(
-      (id) => id !== "0" && id !== "-1" && systemData[id],
+    const systemsPlaced = decoded.map.filter(
+      (tile) => tile.type === "SYSTEM" && tile.idx !== 0,
     ).length;
 
     notifications.show({
