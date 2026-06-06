@@ -34,8 +34,17 @@ export async function syncImageToR2(
   status: "complete" | "incomplete" = "complete",
 ): Promise<string> {
   const suffix = status === "incomplete" ? "-incomplete" : "";
-  const key = `drafts/${draftId}${suffix}.png`;
+  return syncPngToR2(`drafts/${draftId}${suffix}.png`, imageBuffer);
+}
 
+export async function syncPresetMapImageToR2(
+  presetMapId: string,
+  imageBuffer: Buffer,
+): Promise<string> {
+  return syncPngToR2(`preset-maps/${presetMapId}.png`, imageBuffer);
+}
+
+async function syncPngToR2(key: string, imageBuffer: Buffer): Promise<string> {
   await s3Client.send(
     new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,

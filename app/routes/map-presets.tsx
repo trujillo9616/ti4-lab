@@ -1,10 +1,4 @@
-import {
-  ActionIcon,
-  Box,
-  Button,
-  Group,
-  Text,
-} from "@mantine/core";
+import { ActionIcon, Box, Button, Group, Text } from "@mantine/core";
 import { Link, useLoaderData } from "react-router";
 import { listPresetMaps, TechSkipsData } from "~/drizzle/presetMap.server";
 import classes from "./map-presets/styles.module.css";
@@ -31,7 +25,10 @@ function TechSkipIcon({
 }) {
   if (count === 0) return null;
   return (
-    <Box pos="relative" style={{ display: "inline-flex", alignItems: "center" }}>
+    <Box
+      pos="relative"
+      style={{ display: "inline-flex", alignItems: "center" }}
+    >
       <TechIcon techSpecialty={techSpecialty} size={18} />
       <Text
         size="xs"
@@ -77,7 +74,10 @@ function TechSkipsDisplay({ techSkips }: { techSkips: string | null }) {
 function LegendaryDisplay({ count }: { count: number | null }) {
   if (!count || count === 0) return null;
   return (
-    <Box pos="relative" style={{ display: "inline-flex", alignItems: "center" }}>
+    <Box
+      pos="relative"
+      style={{ display: "inline-flex", alignItems: "center" }}
+    >
       <LegendaryIcon size={18} />
       <Text
         size="xs"
@@ -105,6 +105,9 @@ type AuthorGroup = {
   totalLikes: number;
   maps: PresetMapRecord[];
 };
+
+const presetImageUrl = (preset: PresetMapRecord) =>
+  preset.imageUrl ?? `/map-preset/${preset.id}.png`;
 
 function groupByAuthor(presets: PresetMapRecord[]): AuthorGroup[] {
   const grouped = new Map<string, PresetMapRecord[]>();
@@ -146,7 +149,7 @@ function MapCard({
         <div className={classes.mapPreviewWrap}>
           <Box
             component="img"
-            src={`/map-preset/${preset.id}.png`}
+            src={presetImageUrl(preset)}
             alt={preset.name}
             className={classes.mapPreview}
           />
@@ -168,15 +171,14 @@ function MapCard({
                 <span className={classes.statLabel}>Avg</span>
               </span>
             )}
-            {preset.totalResources != null &&
-              preset.totalInfluence != null && (
-                <span className={classes.stat}>
-                  <span className={classes.statValue}>
-                    {preset.totalResources}/{preset.totalInfluence}
-                  </span>
-                  <span className={classes.statLabel}>R/I</span>
+            {preset.totalResources != null && preset.totalInfluence != null && (
+              <span className={classes.stat}>
+                <span className={classes.statValue}>
+                  {preset.totalResources}/{preset.totalInfluence}
                 </span>
-              )}
+                <span className={classes.statLabel}>R/I</span>
+              </span>
+            )}
             <LegendaryDisplay count={preset.legendaries} />
             <TechSkipsDisplay techSkips={preset.techSkips} />
           </div>
@@ -211,9 +213,7 @@ function MapCard({
           </Group>
           <Button
             component="a"
-            href={`/map-generator?map=${encodeURIComponent(
-              preset.mapString,
-            )}`}
+            href={`/map-generator?map=${encodeURIComponent(preset.mapString)}`}
             variant="subtle"
             color="blue"
             size="compact-xs"

@@ -19,9 +19,7 @@ import {
   IconArrowLeft,
 } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
-import {
-  decodeMapString,
-} from "~/mapgen/utils/mapStringCodec";
+import { decodeMapString } from "~/mapgen/utils/mapStringCodec";
 import { Map, MAP_INTERACTIONS } from "~/components/Map";
 import { buildPresetDraftState } from "~/mapgen/utils/presetDraft";
 import { notifications } from "@mantine/notifications";
@@ -46,7 +44,10 @@ function TechSkipIcon({
 }) {
   if (count === 0) return null;
   return (
-    <Box pos="relative" style={{ display: "inline-flex", alignItems: "center" }}>
+    <Box
+      pos="relative"
+      style={{ display: "inline-flex", alignItems: "center" }}
+    >
       <TechIcon techSpecialty={techSpecialty} size={22} />
       <Text
         size="xs"
@@ -92,7 +93,10 @@ function TechSkipsDisplay({ techSkips }: { techSkips: string | null }) {
 function LegendaryDisplay({ count }: { count: number | null }) {
   if (!count || count === 0) return null;
   return (
-    <Box pos="relative" style={{ display: "inline-flex", alignItems: "center" }}>
+    <Box
+      pos="relative"
+      style={{ display: "inline-flex", alignItems: "center" }}
+    >
       <LegendaryIcon size={22} />
       <Text
         size="xs"
@@ -147,6 +151,7 @@ type LoaderData = {
     name: string;
     description: string;
     author: string;
+    imageUrl: string | null;
   };
 };
 
@@ -159,7 +164,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const description = preset.description
     ? `${preset.description} — by ${preset.author}`
     : `Map by ${preset.author}`;
-  const imageUrl = `https://tidraft.com/map-preset/${preset.id}.png`;
+  const imageUrl =
+    preset.imageUrl ?? `https://tidraft.com/map-preset/${preset.id}.png`;
   const url = `https://tidraft.com/maps/${preset.slug}`;
 
   return [
@@ -194,7 +200,15 @@ export default function MapDetail() {
 
   // Compute slice stats for the map
   const sliceValues = useMemo(
-    () => (decoded ? getAllSliceValues(decoded.map, undefined, undefined, decoded.ringCount) : {}),
+    () =>
+      decoded
+        ? getAllSliceValues(
+            decoded.map,
+            undefined,
+            undefined,
+            decoded.ringCount,
+          )
+        : {},
     [decoded],
   );
   const sliceStats = useMemo(
@@ -202,7 +216,10 @@ export default function MapDetail() {
     [decoded],
   );
   const sliceBreakdowns = useMemo(
-    () => (decoded ? getAllSliceBreakdowns(decoded.map, undefined, decoded.ringCount) : {}),
+    () =>
+      decoded
+        ? getAllSliceBreakdowns(decoded.map, undefined, decoded.ringCount)
+        : {},
     [decoded],
   );
   const tileContributions = useMemo(
@@ -326,16 +343,17 @@ export default function MapDetail() {
                     </Text>
                   </div>
                 )}
-                {preset.totalResources != null && preset.totalInfluence != null && (
-                  <div className={classes.mapStatItem}>
-                    <Text size="lg" fw={700} c="white">
-                      {preset.totalResources}/{preset.totalInfluence}
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      R/I
-                    </Text>
-                  </div>
-                )}
+                {preset.totalResources != null &&
+                  preset.totalInfluence != null && (
+                    <div className={classes.mapStatItem}>
+                      <Text size="lg" fw={700} c="white">
+                        {preset.totalResources}/{preset.totalInfluence}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        R/I
+                      </Text>
+                    </div>
+                  )}
                 {(preset.legendaries ?? 0) > 0 && (
                   <div className={classes.mapStatItem}>
                     <LegendaryDisplay count={preset.legendaries} />

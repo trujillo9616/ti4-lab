@@ -1,0 +1,1 @@
+ALTER TABLE `presetMaps` ADD `imageUrl` text;

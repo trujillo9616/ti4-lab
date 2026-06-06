@@ -140,6 +140,7 @@ export const presetMaps = sqliteTable(
     author: text("author").notNull(),
     mapString: text("mapString").notNull(),
     mapConfigId: text("mapConfigId").notNull(),
+    imageUrl: text("imageUrl"),
     likes: integer("likes").notNull().default(0),
     views: integer("views").notNull().default(0),
     avgSliceValue: real("avgSliceValue"),

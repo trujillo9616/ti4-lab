@@ -14,6 +14,7 @@ export type PresetMapRecord = {
   author: string;
   mapString: string;
   mapConfigId: string;
+  imageUrl: string | null;
   likes: number;
   views: number;
   avgSliceValue: number | null;
@@ -142,7 +143,10 @@ export async function listPresetMaps(): Promise<PresetMapRecord[]> {
   return (await db
     .select()
     .from(presetMaps)
-    .orderBy(desc(presetMaps.views), desc(presetMaps.createdAt))) as PresetMapRecord[];
+    .orderBy(
+      desc(presetMaps.views),
+      desc(presetMaps.createdAt),
+    )) as PresetMapRecord[];
 }
 
 export async function presetMapById(
@@ -169,6 +173,17 @@ export async function presetMapBySlug(
   return results[0] as PresetMapRecord | undefined;
 }
 
+export async function updatePresetMapImageUrl(
+  id: string,
+  imageUrl: string,
+): Promise<void> {
+  await db
+    .update(presetMaps)
+    .set({ imageUrl, updatedAt: sql`CURRENT_TIMESTAMP` })
+    .where(eq(presetMaps.id, id))
+    .run();
+}
+
 export async function incrementPresetMapViews(id: string): Promise<number> {
   await db
     .update(presetMaps)
@@ -192,9 +207,7 @@ export async function likePresetMap(
     const existing = await tx
       .select({ id: presetMapLikes.id })
       .from(presetMapLikes)
-      .where(
-        and(eq(presetMapLikes.presetMapId, id), eq(presetMapLikes.ip, ip)),
-      )
+      .where(and(eq(presetMapLikes.presetMapId, id), eq(presetMapLikes.ip, ip)))
       .limit(1);
 
     if (existing.length > 0) {

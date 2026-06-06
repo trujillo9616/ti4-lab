@@ -1,9 +1,13 @@
-import { LoaderFunctionArgs } from "react-router";
-import { presetMapById } from "~/drizzle/presetMap.server";
+import { LoaderFunctionArgs, redirect } from "react-router";
+import {
+  presetMapById,
+  updatePresetMapImageUrl,
+} from "~/drizzle/presetMap.server";
 import { decodeMapString } from "~/mapgen/utils/mapStringCodec";
 import { generateMapGeneratorImageBuffer } from "~/skiaRendering/mapGeneratorImage.server";
+import { syncPresetMapImageToR2 } from "~/utils/syncImageToR2.server";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const id = params.id;
   if (!id) {
     throw new Response("Map ID required", { status: 400 });
@@ -14,16 +18,27 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     throw new Response("Preset map not found", { status: 404 });
   }
 
+  if (preset.imageUrl) {
+    return redirect(preset.imageUrl, {
+      status: 302,
+      headers: {
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+    });
+  }
+
   const decoded = decodeMapString(preset.mapString);
   if (!decoded) {
     throw new Response("Invalid map string format", { status: 400 });
   }
 
   const imageBuffer = await generateMapGeneratorImageBuffer(decoded.map);
+  const cdnUrl = await syncPresetMapImageToR2(preset.id, imageBuffer);
+  await updatePresetMapImageUrl(preset.id, cdnUrl);
 
-  return new Response(imageBuffer, {
+  return redirect(cdnUrl, {
+    status: 302,
     headers: {
-      "Content-Type": "image/png",
       "Cache-Control": "public, max-age=31536000, immutable",
     },
   });
