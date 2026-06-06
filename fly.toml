@@ -8,6 +8,10 @@ primary_region = 'dfw'
 
 [build]
 
+[metrics]
+  port = 3000
+  path = "/metrics"
+
 [[mounts]]
   source = 'data'
   destination = '/data'
