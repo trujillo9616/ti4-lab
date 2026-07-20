@@ -213,7 +213,7 @@ export const factions: Record<FactionId, Faction> = {
       carrier: 2,
       spacedock: 1,
       fighter: 1,
-      pds: 1,
+      pds: 2,
     },
   },
   winnu: {
