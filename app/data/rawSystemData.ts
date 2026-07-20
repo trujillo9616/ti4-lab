@@ -2132,6 +2132,9 @@ export const rawSystems: Record<string, RawSystem> = {
         resources: 2,
         influence: 2,
         legendary: true,
+        legendaryTitle: "Imperial Salvage Yard",
+        legendaryDescription:
+          "You may exhaust this card at the end of your turn to place 1 cruiser from your reinforcements in any system that contains 1 or more of your ships.",
         trait: ["INDUSTRIAL"],
       },
     ],
@@ -2147,6 +2150,9 @@ export const rawSystems: Record<string, RawSystem> = {
         resources: 1,
         influence: 2,
         legendary: true,
+        legendaryTitle: "Bi-Phasic Generators",
+        legendaryDescription:
+          "You may exhaust this card at the end of your turn to place 1 frontier token in a system that does not contain a planet.",
         trait: ["HAZARDOUS"],
       },
     ],
@@ -2162,6 +2168,9 @@ export const rawSystems: Record<string, RawSystem> = {
         resources: 3,
         influence: 0,
         legendary: true,
+        legendaryTitle: "Council Black Site",
+        legendaryDescription:
+          "After an agenda is revealed, you may exhaust this card to predict aloud an outcome of that agenda. If your prediction is correct, draw 1 secret objective.",
         trait: ["INDUSTRIAL"],
       },
     ],
@@ -2177,6 +2186,9 @@ export const rawSystems: Record<string, RawSystem> = {
         resources: 0,
         influence: 3,
         legendary: true,
+        legendaryTitle: "Mystic Library",
+        legendaryDescription:
+          "You may exhaust this card at the end of your turn and purge a non-faction, non-unit upgrade technology you own to gain 1 technology with the same number of prerequisites.",
         trait: ["INDUSTRIAL"],
       },
     ],
@@ -2446,6 +2458,9 @@ export const rawSystems: Record<string, RawSystem> = {
         resources: 2,
         influence: 1,
         legendary: true,
+        legendaryTitle: "Fractal Gate",
+        legendaryDescription:
+          "You may exhaust this card at the end of your turn to remove 1 of your ships from the game board and place that unit in an adjacent system that does not contain another player’s ships.",
         trait: ["HAZARDOUS"],
       },
     ],
