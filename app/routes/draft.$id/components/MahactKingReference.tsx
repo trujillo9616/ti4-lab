@@ -69,8 +69,17 @@ export function MahactKingReference({ faction, reference }: Props) {
             p={{ base: "sm", sm: "md" }}
           >
             <Stack gap="sm">
-              <Group gap="xs" align="baseline">
-                <Badge variant="filled" color="dark" size="sm">
+              <Group gap="xs" align="center">
+                <Badge
+                  variant="filled"
+                  color={reference.accent}
+                  size="xl"
+                  radius="sm"
+                  h="auto"
+                  py={5}
+                  fz={{ base: "md", sm: "lg" }}
+                  fw={700}
+                >
                   {unit.type}
                 </Badge>
                 <Text fw={700} fz={{ base: "md", sm: "lg" }}>
