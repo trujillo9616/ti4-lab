@@ -9,6 +9,7 @@ import {
   PlayerId,
   FactionReferenceCardPack,
   FactionId,
+  HomeTile,
 } from "~/types";
 import { hydrateMap, hydratePresetMap } from "~/utils/map";
 import { atom } from "jotai/vanilla";
@@ -17,7 +18,10 @@ import { draftConfig } from "~/draft";
 import { factionSystems } from "~/data/systemData";
 import { factions as allFactions } from "~/data/factionData";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
-import { encodeTtsMapString } from "~/mapgen/utils/mapStringCodec";
+import {
+  encodeAsyncMapString,
+  encodeTtpgMapString,
+} from "~/mapgen/utils/externalMapStringCodec";
 
 // check if the player name is either empty or Player N where 'n' is a number
 const isDefaultName = (name: string) => {
@@ -341,18 +345,27 @@ export const hydratedMapAtom = atom((get) => {
   );
 });
 
-export const hydratedMapStringAtom = atom((get) => {
+export const hydratedMapStringsAtom = atom((get) => {
   const hydratedMap = get(hydratedMapAtom);
   const hydratedPlayers = get(hydratedPlayersAtom);
 
-  return encodeTtsMapString(hydratedMap, {
-    homeSystemId: (tile) => {
+  const options = {
+    homeSystemId: (tile: HomeTile) => {
       const player = hydratedPlayers.find((p) => p.id === tile.playerId);
       const faction = player?.homeSystemFactionId ?? player?.faction;
       return faction ? factionSystems[faction]?.id : "0";
     },
-  });
+  } as const;
+
+  return {
+    ttpg: encodeTtpgMapString(hydratedMap, options),
+    async: encodeAsyncMapString(hydratedMap, options),
+  };
 });
+
+export const hydratedMapStringAtom = atom(
+  (get) => get(hydratedMapStringsAtom).ttpg,
+);
 
 export function useHydratedDraft() {
   const { pickForAnyone } = useSafeOutletContext();

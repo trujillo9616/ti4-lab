@@ -12,6 +12,7 @@ import {
   Group,
   Anchor,
   Divider,
+  SegmentedControl,
 } from "@mantine/core";
 import {
   IconCheck,
@@ -24,14 +25,15 @@ import {
 import { useDraft } from "~/draftStore";
 import { Section, SectionTitle } from "~/components/Section";
 import { SummaryRow } from "./SummaryRow";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { SummaryCard } from "./MidDraftSummary";
 import { useNavigate } from "react-router";
 import { PlayerInputSection } from "~/routes/draft.new/components/PlayerInputSection";
 import {
-  hydratedMapStringAtom,
+  hydratedMapStringsAtom,
   useHydratedDraft,
 } from "~/hooks/useHydratedDraft";
+import type { ExternalMapStringFormat } from "~/mapgen/utils/externalMapStringCodec";
 import { useDraftConfig } from "~/hooks/useDraftConfig";
 import { MapSection } from "../sections";
 import { useAtom } from "jotai";
@@ -75,7 +77,10 @@ export function FinalizedDraft() {
     () => hydratedPlayers.sort((a, b) => a.speakerOrder! - b.speakerOrder!),
     [hydratedPlayers],
   );
-  const [mapString] = useAtom(hydratedMapStringAtom);
+  const [mapStrings] = useAtom(hydratedMapStringsAtom);
+  const [mapStringFormat, setMapStringFormat] =
+    useState<ExternalMapStringFormat>("ttpg");
+  const mapString = mapStrings[mapStringFormat];
 
   const handleSoundboardClick = () => {
     const factionIds = hydratedPlayers
@@ -312,11 +317,20 @@ export function FinalizedDraft() {
             </Section>
 
             <Section>
-              <SectionTitle title="TTS String" />
+              <SectionTitle title="Map String">
+                <SegmentedControl
+                  size="xs"
+                  data={[
+                    { label: "TTPG", value: "ttpg" },
+                    { label: "Async", value: "async" },
+                  ]}
+                  value={mapStringFormat}
+                  onChange={(value) =>
+                    setMapStringFormat(value as ExternalMapStringFormat)
+                  }
+                />
+              </SectionTitle>
               <Stack gap={6}>
-                <Text size="xs" c="dimmed">
-                  Copy this map code for Tabletop Simulator.
-                </Text>
                 <TextInput
                   size="sm"
                   value={mapString}
@@ -328,7 +342,11 @@ export function FinalizedDraft() {
                           variant="subtle"
                           color={copied ? "teal" : "gray"}
                           onClick={copy}
-                          aria-label={copied ? "Copied TTS string" : "Copy TTS string"}
+                          aria-label={
+                            copied
+                              ? `Copied ${mapStringFormat} string`
+                              : `Copy ${mapStringFormat} string`
+                          }
                         >
                           {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
                         </ActionIcon>

@@ -99,16 +99,6 @@ export type DecodedMapData = {
   closedTiles: number[];
 };
 
-export type DecodedTtsMapData = {
-  map: Map;
-  ringCount: number;
-  gameSets: GameSet[];
-};
-
-type EncodeTtsMapStringOptions = {
-  homeSystemId?: (tile: HomeTile) => SystemId | "0" | undefined;
-};
-
 /**
  * Derives the ring count from the number of encoded values.
  * Formula: ringCount = (-1 + sqrt(1 + 4*length/3)) / 2
@@ -288,68 +278,5 @@ export function decodeMapString(mapString: string): DecodedMapData | null {
     ringCount,
     gameSets: inferGameSetsFromTiles(systemIds),
     closedTiles,
-  };
-}
-
-export function encodeTtsMapString(
-  map: Map,
-  options: EncodeTtsMapStringOptions = {},
-): string {
-  return map
-    .slice(1)
-    .map((tile) => {
-      if (tile.type === "HOME") return options.homeSystemId?.(tile) ?? "0";
-      if (tile.type === "SYSTEM") return tile.systemId;
-      return "-1";
-    })
-    .join(" ");
-}
-
-export function decodeTtsMapString(
-  ttsString: string,
-): DecodedTtsMapData | null {
-  if (!ttsString || typeof ttsString !== "string") {
-    return null;
-  }
-
-  const parts = ttsString.trim().split(/\s+/).filter(Boolean);
-  const decodedParts = parts.length > 0 ? decodeParts(parts) : null;
-  if (!decodedParts) return null;
-
-  const { coords, map, ringCount } = decodedParts;
-  const systemIds: SystemId[] = [];
-  let nextSeat = 0;
-
-  for (let i = 0; i < parts.length && i + 1 < coords.length; i++) {
-    const idx = i + 1;
-    const value = parts[i];
-
-    if (value === "0") {
-      map.push(homeTile(idx, coords[idx], nextSeat));
-      nextSeat++;
-      continue;
-    }
-
-    if (value === "-1") {
-      map.push(openTile(idx, coords[idx]));
-      continue;
-    }
-
-    if (systemData[value as SystemId]) {
-      const systemId = value as SystemId;
-      map.push(systemTile(idx, coords[idx], systemId));
-      systemIds.push(systemId);
-      continue;
-    }
-
-    map.push(openTile(idx, coords[idx]));
-  }
-
-  fillRemainingOpenTiles(map, coords);
-
-  return {
-    map,
-    ringCount,
-    gameSets: inferGameSetsFromTiles(systemIds),
   };
 }

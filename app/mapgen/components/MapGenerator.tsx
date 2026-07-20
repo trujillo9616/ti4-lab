@@ -57,9 +57,14 @@ import { useMapStats } from "../utils/mapStats";
 import {
   encodeMapString,
   decodeMapString,
-  encodeTtsMapString,
-  decodeTtsMapString,
 } from "../utils/mapStringCodec";
+import {
+  encodeAsyncMapString,
+  decodeAsyncMapString,
+  encodeTtpgMapString,
+  decodeTtpgMapString,
+  type ExternalMapStringFormat,
+} from "../utils/externalMapStringCodec";
 import {
   getAllSliceValues,
   getAllSliceStats,
@@ -75,7 +80,7 @@ import { systemData } from "~/data/systemData";
 import { ShareMapModal } from "./ShareMapModal";
 import { mapConfigs } from "~/mapgen/mapConfigs";
 import { DraftTypeSelectionModal } from "./DraftTypeSelectionModal";
-import { TtsImportExportModal } from "./TtsImportExportModal";
+import { MapStringImportExportModal } from "./MapStringImportExportModal";
 import { DraftType } from "~/draft/types";
 import { buildPresetDraftState } from "../utils/presetDraft";
 
@@ -146,7 +151,7 @@ function MapGeneratorContent() {
     useDisclosure(false);
   const [draftTypeOpened, { open: openDraftType, close: closeDraftType }] =
     useDisclosure(false);
-  const [ttsOpened, { open: openTts, close: closeTts }] =
+  const [mapStringsOpened, { open: openMapStrings, close: closeMapStrings }] =
     useDisclosure(false);
   const [publishOpened, { open: openPublish, close: closePublish }] =
     useDisclosure(false);
@@ -161,9 +166,13 @@ function MapGeneratorContent() {
     return encodeMapString(map);
   }, [map]);
 
-  const ttsMapString = useMemo(() => {
-    return encodeTtsMapString(map);
-  }, [map]);
+  const externalMapStrings = useMemo(
+    () => ({
+      ttpg: encodeTtpgMapString(map),
+      async: encodeAsyncMapString(map),
+    }),
+    [map],
+  );
 
   const hasSystems = useMemo(() => {
     return map.some((tile) => tile.type === "SYSTEM" && tile.idx !== 0);
@@ -255,24 +264,31 @@ function MapGeneratorContent() {
     }
   };
 
-  const handleImportTtsString = (ttsString: string) => {
-    if (!ttsString.trim()) {
+  const handleImportMapString = (
+    mapString: string,
+    format: ExternalMapStringFormat,
+  ): boolean => {
+    const formatLabel = format === "ttpg" ? "TTPG" : "Async";
+    if (!mapString.trim()) {
       notifications.show({
         title: "Invalid input",
-        message: "Please enter a TTS string",
+        message: `Please enter a ${formatLabel} map string`,
         color: "red",
       });
-      return;
+      return false;
     }
 
-    const decoded = decodeTtsMapString(ttsString);
+    const decoded =
+      format === "ttpg"
+        ? decodeTtpgMapString(mapString)
+        : decodeAsyncMapString(mapString);
     if (!decoded) {
       notifications.show({
         title: "Invalid input",
-        message: "TTS string is not a valid map",
+        message: `This is not a valid ${formatLabel} map string`,
         color: "red",
       });
-      return;
+      return false;
     }
 
     setGameSets(decoded.gameSets);
@@ -285,9 +301,10 @@ function MapGeneratorContent() {
 
     notifications.show({
       title: "Map imported",
-      message: `Imported ${systemsPlaced} systems from TTS string`,
+      message: `Imported ${systemsPlaced} systems from ${formatLabel}`,
       color: "green",
     });
+    return true;
   };
 
   const handleCreateDraft = () => {
@@ -568,11 +585,13 @@ function MapGeneratorContent() {
           </Button>
         </Group>
       </Modal>
-      <TtsImportExportModal
-        ttsExportString={hasSystems ? ttsMapString : ""}
-        opened={ttsOpened}
-        onClose={closeTts}
-        onImport={handleImportTtsString}
+      <MapStringImportExportModal
+        exportStrings={
+          hasSystems ? externalMapStrings : { ttpg: "", async: "" }
+        }
+        opened={mapStringsOpened}
+        onClose={closeMapStrings}
+        onImport={handleImportMapString}
       />
 
       <MapBuilderPlanetFinder />
@@ -652,9 +671,9 @@ function MapGeneratorContent() {
                   variant="subtle"
                   color="gray"
                   size="xs"
-                  onClick={openTts}
+                  onClick={openMapStrings}
                 >
-                  Import/Export
+                  Map Strings
                 </Button>
                 <Group gap={4}>
                   <ActionIcon variant="subtle" color="gray" size="sm" onClick={removeHomeSystem} disabled={playerCount <= 1}>
