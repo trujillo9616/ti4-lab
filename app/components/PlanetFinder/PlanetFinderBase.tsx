@@ -110,8 +110,7 @@ export function PlanetFinderBase({
         if (!usedSystemIds.includes(a.id) && usedSystemIds.includes(b.id))
           return -1;
         return 0;
-      })
-      .slice(0, 20);
+      });
   }, [combinedSearchTerms, availableSystemIds, usedSystemIds]);
 
   const { itemRefs, resetFocus } = useArrowFocus(systems, (idx) => {
