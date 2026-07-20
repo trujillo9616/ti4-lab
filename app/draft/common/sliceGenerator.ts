@@ -105,14 +105,24 @@ export function coreRerollSlice(
   return attemptReroll(0);
 }
 
-export const coreRerollMap = (settings: DraftSettings, slices: SystemIds[]) =>
-  coreGenerateMap(
+export const coreRerollMap = (settings: DraftSettings, slices: SystemIds[]) => {
+  const config = draftConfig[settings.type];
+  if (settings.minorFactionsMode?.mode === "random") {
+    const generated = config.generateMap?.(
+      { ...settings, presetSlices: slices },
+      getSystemPool(settings.tileGameSets),
+    );
+    return generated && { ...generated, valid: true };
+  }
+
+  return coreGenerateMap(
     settings,
     getSystemPool(settings.tileGameSets),
     0,
     // do not generate slices, just re-use the existing slices
     () => slices,
   );
+};
 
 /**
  * Generate a map and slices using a core function.

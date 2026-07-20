@@ -64,22 +64,24 @@ export const generateMap = (
     );
     if (slices === undefined) return undefined;
     return {
-      map: generateEmptyMap(draftConfig[settings.type]),
+      map: generateEmptyMap(config),
       slices,
       valid: slices !== undefined,
     };
   }
   if (minorFactionsMode?.mode === "random") {
-    const slices = generateSlices(
-      settings.numSlices,
-      systemPool,
-      settings.sliceGenerationConfig,
-    );
+    const slices =
+      settings.presetSlices ??
+      generateSlices(
+        settings.numSlices,
+        systemPool,
+        settings.sliceGenerationConfig,
+      );
     if (slices === undefined) return undefined;
 
     const map = generateEmptyMap(config);
     const factionPool = shuffle(
-      // keleres is weird and does not have a home system so we exclude it
+      // Keleres has no single home system to place on the map.
       getFactionPool(settings.factionGameSets).filter((id) => id !== "keleres"),
       config.numPlayers,
     );
@@ -90,12 +92,11 @@ export const generateMap = (
       );
       if (!factionSystem) throw new Error(`Faction ${faction} not found`);
 
-      const minorFactionsEqPositions = config.minorFactionsEqPositions;
-      if (!minorFactionsEqPositions) return;
-
-      map[minorFactionsEqPositions[idx]] = {
-        idx: minorFactionsEqPositions[idx],
-        position: mapStringOrder[minorFactionsEqPositions[idx]],
+      const position = config.minorFactionsEqPositions?.[idx];
+      if (position === undefined) return;
+      map[position] = {
+        idx: position,
+        position: mapStringOrder[position],
         type: "SYSTEM",
         systemId: factionSystem.id,
       };
