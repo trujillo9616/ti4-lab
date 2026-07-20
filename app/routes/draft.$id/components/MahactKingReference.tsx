@@ -73,11 +73,11 @@ export function MahactKingReference({ faction, reference }: Props) {
                 <Badge
                   variant="filled"
                   color={reference.accent}
-                  size="xl"
+                  size="lg"
                   radius="sm"
                   h="auto"
-                  py={5}
-                  fz={{ base: "md", sm: "lg" }}
+                  py={4}
+                  fz={{ base: "sm", sm: "md" }}
                   fw={700}
                 >
                   {unit.type}
