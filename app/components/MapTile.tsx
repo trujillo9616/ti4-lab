@@ -2,7 +2,14 @@ import { Tile } from "~/types";
 import { SystemTile } from "./tiles/SystemTile";
 import { EmptyTile } from "./tiles/EmptyTile";
 import { ClosedTile } from "./tiles/ClosedTile";
-import { useContext, useEffect, useState, useMemo, type JSX } from "react";
+import {
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  type JSX,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { getHexPosition } from "~/utils/positioning";
 import { MecatolTile } from "./tiles/MecatolTile";
 import { HomeTile } from "./tiles/HomeTile";
@@ -149,16 +156,32 @@ function AbstractArtMapTile(props: Props) {
         zIndex: isDragging ? 2 : undefined,
       }
     : undefined;
+  const {
+    role: dragRole,
+    tabIndex: dragTabIndex,
+    ...dragAttributes
+  } = attributes;
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!hovered) return;
+      if (e.key === "Delete") {
+        onDelete?.();
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hovered]);
+  }, [hovered, onDelete]);
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (!hovered) return;
-    if (e.key === "Delete") {
-      onDelete?.();
+  const handleActionKeyUp = (
+    event: ReactKeyboardEvent<HTMLDivElement>,
+    action?: () => void,
+  ) => {
+    if (!action || event.currentTarget !== event.target) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      action();
     }
   };
 
@@ -252,7 +275,6 @@ function AbstractArtMapTile(props: Props) {
   const cursorStyle = closeTileMode && tile.type !== "HOME" && tile.idx !== 0
     ? { cursor: "crosshair" }
     : undefined;
-
   return (
     <>
       <div
@@ -272,8 +294,13 @@ function AbstractArtMapTile(props: Props) {
         onFocus={() => setHovered(true)}
         onBlur={() => setHovered(false)}
         onClick={closeTileMode ? onSelect : undefined}
+        onKeyUp={(event) =>
+          handleActionKeyUp(event, closeTileMode ? onSelect : undefined)
+        }
+        role={closeTileMode && onSelect ? "button" : dragRole}
+        tabIndex={closeTileMode && onSelect ? 0 : dragTabIndex}
         {...listeners}
-        {...attributes}
+        {...dragAttributes}
       >
         {Tile}
 
@@ -297,7 +324,13 @@ function AbstractArtMapTile(props: Props) {
         </div> */}
 
         {showOverlay && !isDragging && !isOver && (
-          <div className="modify-tile-overlay" onMouseUp={onSelect}>
+          <div
+            className="modify-tile-overlay"
+            onMouseUp={onSelect}
+            onKeyUp={(event) => handleActionKeyUp(event, onSelect)}
+            role={onSelect ? "button" : undefined}
+            tabIndex={onSelect ? 0 : undefined}
+          >
             <Hex
               id={`${props.mapId}-${tile.idx}-overlay`}
               color={overlayColor}

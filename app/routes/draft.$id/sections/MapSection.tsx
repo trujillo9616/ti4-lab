@@ -10,7 +10,7 @@ import { useDraftConfig } from "~/hooks/useDraftConfig";
 import { useDraft } from "~/draftStore";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
 import { useCoreSliceValues } from "~/hooks/useCoreSliceValues";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 type Props = {
   titleChildren?: ReactNode;
@@ -34,6 +34,7 @@ export function MapSection({ titleChildren }: Props) {
   const { syncDraft } = useSyncDraft();
   const { selectSeat } = useDraft((state) => state.draftActions);
   const [pendingSeat, setPendingSeat] = useState<number | null>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   const isHeisenDraft = draftType === "heisen" || draftType === "heisen8p";
   const coreSliceData = useCoreSliceValues(hydratedMap, sliceValueModifiers);
@@ -51,6 +52,12 @@ export function MapSection({ titleChildren }: Props) {
     syncDraft();
     setPendingSeat(null);
   };
+
+  useEffect(() => {
+    if (pendingSeat !== null) {
+      confirmButtonRef.current?.focus();
+    }
+  }, [pendingSeat]);
 
   return (
     <div style={{ position: "sticky", width: "auto", top: 60 }}>
@@ -76,7 +83,7 @@ export function MapSection({ titleChildren }: Props) {
           <Button variant="default" onClick={() => setPendingSeat(null)}>
             Cancel
           </Button>
-          <Button color="green" onClick={handleConfirmSeat} autoFocus>
+          <Button ref={confirmButtonRef} color="green" onClick={handleConfirmSeat}>
             Confirm
           </Button>
         </Group>

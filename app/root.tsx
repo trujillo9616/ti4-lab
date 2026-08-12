@@ -8,6 +8,8 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  type LoaderFunctionArgs,
+  redirect,
   useRouteLoaderData,
 } from "react-router";
 import {
@@ -19,9 +21,8 @@ import {
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import type { Socket } from "socket.io-client";
-import io from "socket.io-client";
+import createSocketClient from "socket.io-client";
 import { SocketProvider } from "./socketContext";
-import { LoaderFunctionArgs, redirect } from "react-router";
 import { Notifications } from "@mantine/notifications";
 
 const mantineTheme = createTheme({
@@ -144,7 +145,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const socket = io();
+    const socket = createSocketClient();
     setSocket(socket);
     return () => {
       socket.close();

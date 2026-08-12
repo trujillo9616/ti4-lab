@@ -153,7 +153,6 @@ export const useRawDraft = create<RawDraftStore>((set, get) => {
       },
 
       placeTile: (mapIdx: number, systemId: SystemId) => {
-        const { state } = get();
         const activePlayer = get().getActivePlayer();
         const currentPickNumber = get().getCurrentPickNumber();
 

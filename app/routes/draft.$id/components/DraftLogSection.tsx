@@ -28,8 +28,11 @@ export function DraftLogSection() {
         }}
       >
         <Stack gap={0}>
-          {selections.map((selection) => (
-            <Text size="sm">
+          {selections.map((selection, index) => (
+            <Text
+              key={`${selection.type}-${"playerId" in selection ? selection.playerId : "group"}-${index}`}
+              size="sm"
+            >
               {draftSelectionToMessage(
                 getSelectionPlayerName(selection, players),
                 selection,

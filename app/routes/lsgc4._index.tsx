@@ -160,7 +160,12 @@ export default function LGCS4() {
             style={{ alignItems: "flex-start" }}
           >
             {slices.map((slice, idx) => (
-              <BaseSlice id={`slice-${idx}`} config={config} slice={slice} />
+              <BaseSlice
+                key={slice.name}
+                id={`slice-${idx}`}
+                config={config}
+                slice={slice}
+              />
             ))}
           </SimpleGrid>
         </Grid.Col>

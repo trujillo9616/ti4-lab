@@ -1,22 +1,18 @@
-import { Fragment, useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import {
   Text,
   Container,
   Button,
-  Table,
   Group,
   Slider,
   Stack,
   Select,
   Paper,
-  Badge,
   Popover,
-  ScrollArea,
   ActionIcon,
   Tooltip,
   Box,
   Alert,
-  Anchor,
   Modal,
   Switch,
   Image,
@@ -28,8 +24,14 @@ import { FactionIcon } from "~/components/icons/FactionIcon";
 import { factions } from "~/data/factionData";
 import { factionAudios, LineType, announcerAudios } from "~/data/factionAudios";
 import { VoiceLineButton } from "../soundboard._index/components/VoiceLineButton";
-import { ActionFunctionArgs, data, redirect } from "react-router";
-import { Form, useSearchParams, useLoaderData } from "react-router";
+import {
+  ActionFunctionArgs,
+  data,
+  Form,
+  redirect,
+  useSearchParams,
+  useLoaderData,
+} from "react-router";
 import { useAudioPlayer } from "../soundboard._index/useAudioPlayer";
 import { useSocketConnection } from "~/useSocketConnection";
 import QRCode from "react-qr-code";
@@ -44,12 +46,10 @@ import {
   IconX,
   IconList,
   IconRefresh,
-  IconInfoCircle,
   IconQrcode,
   IconMicrophone2,
   IconMusic,
 } from "@tabler/icons-react";
-import { SectionTitle } from "~/components/Section";
 import {
   trackPageView,
   trackVoiceLineClick,
@@ -62,7 +62,6 @@ import ccStyles from "./ClosedCaptions.module.css";
 import styles from "./styles.module.css";
 import { SpotifyLoginButton } from "../soundboard._index/components/SpotifyLoginButton";
 import { useSpotifyLogin } from "../soundboard._index/useSpotifyLogin";
-import { SpotifyPlaybackState } from "~/vendors/spotifyApi";
 import {
   SpotifyDeviceSelector,
   type SpotifyDeviceType,
@@ -205,90 +204,6 @@ const VoiceLineQueue = ({ queue, onRemove, onClear }: VoiceLineQueueProps) => {
         </div>
       </Popover.Dropdown>
     </Popover>
-  );
-};
-
-interface SpotifyPlaybackUIProps {
-  currentPlayback: SpotifyPlaybackState | null;
-}
-
-const SpotifyPlaybackUI = ({ currentPlayback }: SpotifyPlaybackUIProps) => {
-  if (!currentPlayback) return <></>;
-
-  return (
-    <>
-      <Group justify="space-between" align="center">
-        <Image
-          src="/spotifylogo.svg"
-          alt="Spotify Logo"
-          style={{ width: 90, height: 24 }}
-        />
-        <Button
-          variant="outline"
-          color="red"
-          size="xs"
-          component="a"
-          href="/voices/logout"
-        >
-          Logout
-        </Button>
-      </Group>
-      <Paper radius="md" p="xs" withBorder>
-        <Group gap="md" wrap="nowrap">
-          <Image
-            src={currentPlayback.albumImage.url}
-            alt="Album Art"
-            width={currentPlayback.albumImage.width}
-            height={currentPlayback.albumImage.height}
-            radius="sm"
-          />
-          <Stack gap={2} style={{ overflow: "hidden" }}>
-            <Tooltip label={currentPlayback.track.name} openDelay={500}>
-              <Text
-                fw={500}
-                size="sm"
-                component="a"
-                href={currentPlayback.track.external_urls.spotify}
-                target="_blank"
-                truncate
-                style={{ maxWidth: "100%" }}
-              >
-                {currentPlayback.track.name}
-              </Text>
-            </Tooltip>
-            <Group gap={0}>
-              {currentPlayback.artists.map(
-                (
-                  artist: { id: string; name: string; uri: string },
-                  index: number,
-                ) => (
-                  <Fragment key={artist.id}>
-                    {index > 0 && (
-                      <Text c="dimmed" size="sm">
-                        {" "}
-                        ,{" "}
-                      </Text>
-                    )}
-                    <Tooltip label={artist.name} openDelay={500}>
-                      <Text
-                        component="a"
-                        href={artist.uri}
-                        target="_blank"
-                        c="dimmed"
-                        size="sm"
-                        truncate
-                      >
-                        {artist.name}
-                      </Text>
-                    </Tooltip>
-                  </Fragment>
-                ),
-              )}
-            </Group>
-          </Stack>
-        </Group>
-      </Paper>
-    </>
   );
 };
 

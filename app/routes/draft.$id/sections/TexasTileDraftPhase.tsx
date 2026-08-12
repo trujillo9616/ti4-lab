@@ -12,7 +12,7 @@ import {
 import { useSyncDraft } from "~/hooks/useSyncDraft";
 import { useSimultaneousPickPhase } from "~/hooks/useSimultaneousPickPhase";
 import { useDraft } from "~/draftStore";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AdminPasswordModal } from "../components/AdminPasswordModal";
 import { PlayerSelectionSidebar } from "../components/PlayerSelectionSidebar";
 import { SpectatorModeNotice } from "../components/SpectatorModeNotice";
@@ -52,6 +52,7 @@ export function TexasTileDraftPhase({
   const selectedPlayer = useDraft((state) => state.selectedPlayer);
   const texasDraft = useDraft((state) => state.draft.texasDraft);
   const [pendingPick, setPendingPick] = useState<SystemId | null>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   const phase = useSimultaneousPickPhase(phaseType);
 
@@ -102,6 +103,12 @@ export function TexasTileDraftPhase({
     stageSimultaneousPick(phaseType, phase.currentPlayer.id, pendingPick);
     setPendingPick(null);
   };
+
+  useEffect(() => {
+    if (pendingPick !== null) {
+      confirmButtonRef.current?.focus();
+    }
+  }, [pendingPick]);
 
   const phaseColor = color === "blue" ? "blue" : "red";
 
@@ -228,7 +235,11 @@ export function TexasTileDraftPhase({
             <Button variant="default" onClick={() => setPendingPick(null)}>
               Cancel
             </Button>
-            <Button color="green" onClick={confirmPendingPick} autoFocus>
+            <Button
+              ref={confirmButtonRef}
+              color="green"
+              onClick={confirmPendingPick}
+            >
               Confirm
             </Button>
           </Group>

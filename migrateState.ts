@@ -4,7 +4,7 @@ import { findDrafts } from "~/drizzle/draft.server";
 import { drafts } from "~/drizzle/schema.server";
 import { Draft, DraftPick } from "~/types";
 
-async function migrateState() {
+async function _migrateState() {
   let deletedCount = 0;
   let page = 1;
   let hasMore = true;
@@ -157,7 +157,7 @@ async function fixTwilightsFallPickOrder() {
 }
 
 (async () => {
-  // await migrateState();
+  // await _migrateState();
   await fixTwilightsFallPickOrder();
   console.log("done");
 })();

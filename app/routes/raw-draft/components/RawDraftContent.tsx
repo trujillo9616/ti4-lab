@@ -16,7 +16,6 @@ import { useRawDraft } from "~/rawDraftStore";
 import { PlayerTilesSidebar } from "./PlayerTilesSidebar";
 import { RawCurrentPickBanner } from "./RawCurrentPickBanner";
 import { RawDraftOrderWrapper } from "./RawDraftOrderWrapper";
-import { systemData } from "~/data/systemData";
 import { RawDraftProvider } from "~/contexts/RawDraftContext";
 
 export function RawDraftContent() {
@@ -27,7 +26,6 @@ export function RawDraftContent() {
     state.getCurrentPickNumber(),
   );
   const activePlayer = useRawDraft((state) => state.getActivePlayer());
-  const selectedPlayer = useRawDraft((state) => state.state.selectedPlayer);
   const currentRing = useRawDraft((state) => state.getCurrentPlaceableRing());
   const { placeTile } = useRawDraft((state) => state.actions);
 

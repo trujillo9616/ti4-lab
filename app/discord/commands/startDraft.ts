@@ -57,6 +57,7 @@ const data = new SlashCommandBuilder()
 
 async function execute(interaction: ChatInputCommandInteraction) {
   const data = interaction.options.data;
+  const guildMembers = interaction.guild?.members.cache;
   const players = [
     data.find((option) => option.name === "player1")?.value as
       | string
@@ -87,7 +88,10 @@ async function execute(interaction: ChatInputCommandInteraction) {
     .map((name, idx) => {
       if (name.startsWith("<@")) {
         const memberId = name.substring(2, name.length - 1);
-        const member = interaction.guild?.members.cache.get(memberId)!;
+        const member = guildMembers?.get(memberId);
+        if (!member) {
+          throw new Error(`Guild member ${memberId} not found`);
+        }
         const nickname = member.nickname;
         const username = member.user.username;
 

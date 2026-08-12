@@ -27,5 +27,7 @@ export function playNotificationSound() {
   if (!isAudioAlertEnabled()) return;
 
   const audio = document.getElementById("notificationSound");
-  if (audio) (audio as any).play();
+  if (audio instanceof HTMLAudioElement) {
+    void audio.play();
+  }
 }

@@ -22,7 +22,7 @@ import {
   IconPlus,
   IconAlien,
 } from "@tabler/icons-react";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { factions } from "~/data/factionData";
 import { FactionId, FactionStratification, GameSet } from "~/types";
 

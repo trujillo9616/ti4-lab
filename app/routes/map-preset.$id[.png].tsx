@@ -5,7 +5,10 @@ import {
 } from "~/drizzle/presetMap.server";
 import { decodeMapString } from "~/mapgen/utils/mapStringCodec";
 import { generateMapGeneratorImageBuffer } from "~/skiaRendering/mapGeneratorImage.server";
-import { syncPresetMapImageToR2 } from "~/utils/syncImageToR2.server";
+import {
+  canSyncImagesToR2,
+  syncPresetMapImageToR2,
+} from "~/utils/syncImageToR2.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const id = params.id;
@@ -33,6 +36,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   }
 
   const imageBuffer = await generateMapGeneratorImageBuffer(decoded.map);
+
+  if (!canSyncImagesToR2()) {
+    return new Response(imageBuffer, {
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "no-cache",
+      },
+    });
+  }
+
   const cdnUrl = await syncPresetMapImageToR2(preset.id, imageBuffer);
   await updatePresetMapImageUrl(preset.id, cdnUrl);
 

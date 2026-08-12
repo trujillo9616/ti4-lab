@@ -1,6 +1,5 @@
 import { Grid, Stack, Text } from "@mantine/core";
-import { data, redirect } from "react-router";
-import { useLoaderData } from "react-router";
+import { data, redirect, useLoaderData } from "react-router";
 import { useEffect } from "react";
 import { useDraft } from "~/draftStore";
 import { Draft } from "~/types";
@@ -11,7 +10,6 @@ import {
   draftByPrettyUrl,
   generateUniquePrettyUrl,
 } from "~/drizzle/draft.server";
-import { useHydratedDraft } from "~/hooks/useHydratedDraft";
 import {
   SlicesSection,
   SpeakerOrderSection,
@@ -32,6 +30,8 @@ export default function DraftReplay() {
   const result = useLoaderData<typeof loader>();
   const { setAdminMode, setPickForAnyone } = useSafeOutletContext();
   const draftStore = useDraft();
+  const hydrateDraft = draftStore.draftActions.hydrate;
+  const enableReplayMode = draftStore.replayActions.enableReplayMode;
   const draft = draftStore.draft;
   const settings = draft.settings;
 
@@ -39,13 +39,13 @@ export default function DraftReplay() {
   useEffect(() => {
     setAdminMode(false);
     setPickForAnyone(false);
-  }, []);
+  }, [setAdminMode, setPickForAnyone]);
 
   // pre-seed store with loaded persisted draft and enable replay mode
   useEffect(() => {
-    draftStore.draftActions.hydrate(result.id!, result.urlName!, result.data);
-    draftStore.replayActions.enableReplayMode();
-  }, []);
+    hydrateDraft(result.id!, result.urlName!, result.data);
+    enableReplayMode();
+  }, [enableReplayMode, hydrateDraft, result.data, result.id, result.urlName]);
 
   if (!draftStore.hydrated) return <LoadingOverlay />;
 

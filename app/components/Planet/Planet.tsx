@@ -5,7 +5,6 @@ import { PlanetStats } from "./PlanetStats";
 import { TechIcon } from "../icons/TechIcon";
 import { LegendaryIcon } from "../icons/LegendaryIcon";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
-import { TradeStationIcon } from "~/components/icons/TradeStationIcon";
 import { TradeStation } from "../features/TradeStation";
 import { LegendaryPopover } from "./LegendaryPopover";
 

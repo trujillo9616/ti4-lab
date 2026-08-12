@@ -9,8 +9,12 @@ import {
   Stack,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import type { ActionFunctionArgs } from "react-router";
-import { redirect, useLocation, useNavigate } from "react-router";
+import {
+  type ActionFunctionArgs,
+  redirect,
+  useLocation,
+  useNavigate,
+} from "react-router";
 import { useEffect, useRef } from "react";
 import { PlanetFinder } from "~/routes/draft.$id/components/PlanetFinder";
 import { draftStore, useDraft } from "~/draftStore";
@@ -57,20 +61,23 @@ export default function DraftNew() {
   const isTexasStyle = draft.settings.draftGameMode === "texasStyle";
   const isPresetMapDraft = draft.settings.draftGameMode === "presetMap";
   const autoCreatedRef = useRef(false);
+  const initialLocationStateRef = useRef(location.state);
 
   useEffect(() => {
-    if (location.state == null) {
+    const locationState = initialLocationStateRef.current;
+
+    if (locationState == null) {
       navigate("/draft/prechoice");
       return;
     }
 
-    if (location.state.savedDraftState) {
-      const savedState = location.state.savedDraftState;
+    if (locationState.savedDraftState) {
+      const savedState = locationState.savedDraftState;
       actions.initializeDraftFromSavedState(savedState);
       return;
     }
 
-    const { draftSettings, players, discordData } = location.state;
+    const { draftSettings, players, discordData } = locationState;
     actions.initializeDraft(draftSettings, players, { discord: discordData });
 
     if (
@@ -87,7 +94,7 @@ export default function DraftNew() {
     window.history.replaceState({ ...window.history.state, usr: null }, "");
 
     return () => actions?.reset();
-  }, []);
+  }, [actions, navigate]);
 
   useEffect(() => {
     if (!initialized || !isTexasStyle || autoCreatedRef.current) return;

@@ -11,14 +11,13 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { IconBrandDiscordFilled } from "@tabler/icons-react";
-
 import { Link, useLocation, useNavigate } from "react-router";
-
-const DISCORD_INVITE_URL = "https://discord.gg/2ezSTQpAVC";
 import { useState } from "react";
 import { Logo } from "~/components/Logo";
 import { trackButtonClick } from "~/lib/analytics.client";
 import classes from "./MainAppShell.module.css";
+
+const DISCORD_INVITE_URL = "https://discord.gg/2ezSTQpAVC";
 
 type Props = {
   children: React.ReactNode;

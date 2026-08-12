@@ -7,7 +7,7 @@ import {
   TextChannel,
 } from "discord.js";
 import startDraft from "./commands/startDraft";
-import { Draft } from "~/types";
+import { Draft, Player } from "~/types";
 import { createChannelContext } from "./channelContext";
 import { classifyDiscordError } from "./errorHandler";
 import { getDraftSummaryMessage } from "./formatters/draftSummary";
@@ -19,7 +19,6 @@ import {
   addDiscordPickMessage,
   deleteDiscordPickMessage,
 } from "~/drizzle/discordMessages.server";
-import { Player } from "~/types";
 
 const commands = [startDraft];
 
@@ -33,11 +32,17 @@ declare global {
   var discordClient: Client;
 }
 export async function startDiscordBot() {
+  dotenv.config();
+  const token = process.env.DISCORD_TOKEN?.trim();
+
+  if (!token) {
+    console.warn("Discord bot disabled: DISCORD_TOKEN is not set.");
+    return;
+  }
+
   const client = new Client({
     intents: [GatewayIntentBits.Guilds],
   });
-  dotenv.config();
-  const token = process.env.DISCORD_TOKEN;
   client.commands = new Collection();
   commands.forEach((command) => {
     client.commands.set(command.data.name, command);
@@ -221,7 +226,7 @@ export async function notifyPick(
     await notifyNextPlayer(draftId, draftUrl, draft, context.channel);
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     return { success: false, ...classifyDiscordError(error) };
   }
 }

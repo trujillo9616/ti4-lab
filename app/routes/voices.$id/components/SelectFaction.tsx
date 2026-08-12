@@ -1,5 +1,5 @@
 import { FactionId } from "~/types";
-import { Button, Container, Group, Stack, Box } from "@mantine/core";
+import { Button, Container, Stack, Box } from "@mantine/core";
 import { FactionIcon } from "~/components/icons/FactionIcon";
 import { factions } from "~/data/factionData";
 import { SectionTitle } from "~/components/Section";
