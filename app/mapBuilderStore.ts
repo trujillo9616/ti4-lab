@@ -10,7 +10,6 @@ import {
 import {
   generateHexRings,
   getTileCount,
-  getRingForIndex,
   getRingIndices,
   findClosestOnRing,
   findAvailableOnRing,

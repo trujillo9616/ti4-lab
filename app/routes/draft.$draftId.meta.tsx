@@ -2,8 +2,6 @@ import { LoaderFunctionArgs, data } from "react-router";
 import { draftByPrettyUrl } from "~/drizzle/draft.server";
 import { Draft } from "~/types";
 
-const R2_CDN_BASE_URL = process.env.R2_IMAGES_CDN_URL || "https://pub-placeholder.r2.dev";
-
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const draftId = params.draftId;
   if (!draftId) {

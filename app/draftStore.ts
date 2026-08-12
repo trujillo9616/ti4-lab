@@ -46,6 +46,9 @@ import {
 
 type SelectionType = Extract<DraftSelection, { playerId: PlayerId }>["type"];
 type PlayerSelection = Extract<DraftSelection, { playerId: PlayerId }>;
+type DraftStateWithDraft = Pick<DraftV2State, "draft">;
+type DraftStateWithPools = Pick<DraftV2State, "factionPool" | "systemPool">;
+type PlanetFinderModalState = DraftV2State["planetFinderModal"];
 
 function hasPlayerId(selection: DraftSelection): selection is PlayerSelection {
   return "playerId" in selection;
@@ -246,7 +249,7 @@ const makeSelection = (
   } as DraftSelection);
 };
 
-const resetStratification = (state: any) => {
+const resetStratification = (state: DraftStateWithDraft) => {
   if (state.draft.settings.factionStratification) {
     notifications.show({
       message: "Faction stratification was reset.",
@@ -303,7 +306,7 @@ const setModalState = (
   state: DraftV2State,
   modalType: "factionSettings" | "planetFinder",
   isOpen: boolean,
-  modalParams?: any,
+  modalParams?: PlanetFinderModalState,
 ) => {
   if (modalType === "factionSettings") {
     state.factionSettingsModal = isOpen;
@@ -338,7 +341,7 @@ const getAvailableSystems = (
   );
 };
 
-const initializePools = (state: any, settings: DraftSettings) => {
+const initializePools = (state: DraftStateWithPools, settings: DraftSettings) => {
   state.factionPool = getFactionPool(settings.factionGameSets);
   state.systemPool = getSystemPool(settings.tileGameSets);
 };

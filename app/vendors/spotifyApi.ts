@@ -30,6 +30,54 @@ export type SpotifyPlaybackState = {
   device: {
     is_restricted: boolean;
   };
+  actions?: unknown;
+};
+
+type SpotifyTokenResponse = {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+};
+
+type SpotifyRefreshTokenResponse = {
+  access_token: string;
+  expires_in: number;
+};
+
+type SpotifyArtistResponse = {
+  name: string;
+  id: string;
+  external_urls: {
+    spotify: string;
+  };
+};
+
+type SpotifyPlaybackResponse = {
+  context: SpotifyPlaybackState["context"];
+  item: SpotifyPlaybackState["track"] & {
+    artists: SpotifyArtistResponse[];
+    album: {
+      images: SpotifyPlaybackState["albumImage"][];
+    };
+  };
+  progress_ms: number;
+  is_playing: boolean;
+  device: SpotifyPlaybackState["device"];
+  actions?: unknown;
+};
+
+type SpotifyDevice = {
+  id: string;
+  is_active: boolean;
+  is_private_session: boolean;
+  is_restricted: boolean;
+  name: string;
+  type: string;
+  volume_percent: number;
+};
+
+type SpotifyDevicesResponse = {
+  devices: SpotifyDevice[];
 };
 
 export const spotifyApi = {
@@ -61,7 +109,7 @@ export const spotifyApi = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as SpotifyTokenResponse;
       return {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
@@ -99,7 +147,7 @@ export const spotifyApi = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as SpotifyRefreshTokenResponse;
       return {
         accessToken: data.access_token,
         expiresIn: data.expires_in,
@@ -122,14 +170,14 @@ export const spotifyApi = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as SpotifyPlaybackResponse;
 
       return {
         context: data.context,
         track: data.item,
         position: data.progress_ms,
         isPlaying: data.is_playing,
-        artists: data.item.artists.map((artist: any) => ({
+        artists: data.item.artists.map((artist) => ({
           name: artist.name,
           id: artist.id,
           uri: artist.external_urls.spotify,
@@ -222,7 +270,7 @@ export const spotifyApi = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as SpotifyDevicesResponse;
       return data.devices;
     } catch (error) {
       console.error("Error getting available Spotify devices:", error);

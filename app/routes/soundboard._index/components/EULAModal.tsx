@@ -24,9 +24,9 @@ export function EULAModal({ opened, onClose, onAccept }: Props) {
       </Text>
 
       <Text size="sm" mb="md">
-        This End User License Agreement ("Agreement") governs your use of TI4
-        Lab ("Application"). By using this Application, you agree to the terms
-        outlined below.
+        This End User License Agreement (&quot;Agreement&quot;) governs your
+        use of TI4 Lab (&quot;Application&quot;). By using this Application,
+        you agree to the terms outlined below.
       </Text>
 
       <Text fw={600} size="sm" mb="xs">
@@ -48,8 +48,8 @@ export function EULAModal({ opened, onClose, onAccept }: Props) {
         • Reverse engineer, modify, or distribute the Application.
         <br />
         • Use the Application for any unlawful purpose or in violation of
-        Spotify's Developer Terms of Service.
-        <br />• Use the Application in a way that interferes with Spotify's
+        Spotify&apos;s Developer Terms of Service.
+        <br />• Use the Application in a way that interferes with Spotify&apos;s
         services or infringes on third-party rights.
       </Text>
 
@@ -73,9 +73,9 @@ export function EULAModal({ opened, onClose, onAccept }: Props) {
         5. Disclaimers & Limitation of Liability
       </Text>
       <Text size="sm" mb="md">
-        This Application is provided "as is" without warranties of any kind. We
-        are not responsible for any damages or losses resulting from your use of
-        the Application.
+        This Application is provided &quot;as is&quot; without warranties of
+        any kind. We are not responsible for any damages or losses resulting
+        from your use of the Application.
       </Text>
 
       <Text fw={600} size="sm" mb="xs">

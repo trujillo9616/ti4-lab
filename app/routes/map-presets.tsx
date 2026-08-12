@@ -1,6 +1,10 @@
 import { ActionIcon, Box, Button, Group, Text } from "@mantine/core";
 import { Link, useLoaderData } from "react-router";
-import { listPresetMaps, TechSkipsData } from "~/drizzle/presetMap.server";
+import {
+  listPresetMaps,
+  type PresetMapRecord,
+  type TechSkipsData,
+} from "~/drizzle/presetMap.server";
 import classes from "./map-presets/styles.module.css";
 import {
   IconEye,
@@ -14,7 +18,6 @@ import { MainAppShell } from "~/components/MainAppShell";
 import { TechIcon } from "~/components/icons/TechIcon";
 import { LegendaryIcon } from "~/components/icons/LegendaryIcon";
 import { TechSpecialty } from "~/types";
-import type { PresetMapRecord } from "~/drizzle/presetMap.server";
 
 function TechSkipIcon({
   techSpecialty,

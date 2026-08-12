@@ -50,10 +50,13 @@ export function TexasMapBuildPhase() {
     }
   };
 
-  const playerTiles =
-    activePlayer && draft.texasDraft?.playerTiles
-      ? draft.texasDraft.playerTiles[activePlayer.id] ?? []
-      : [];
+  const playerTiles = useMemo(() => {
+    if (!activePlayer || !draft.texasDraft?.playerTiles) {
+      return [];
+    }
+
+    return draft.texasDraft.playerTiles[activePlayer.id] ?? [];
+  }, [activePlayer, draft.texasDraft?.playerTiles]);
 
   const mapForRender = hydratedMap ?? draft.presetMap;
   const currentRing = getCurrentPlaceableRing(mapForRender);

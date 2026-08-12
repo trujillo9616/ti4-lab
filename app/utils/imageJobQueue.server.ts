@@ -5,7 +5,7 @@ import {
   generateDraftSlicesImage,
   generatePresetDraftImage,
 } from "~/skiaRendering/slicesImageGenerator.server";
-import { syncImageToR2 } from "~/utils/syncImageToR2.server";
+import { canSyncImagesToR2, syncImageToR2 } from "~/utils/syncImageToR2.server";
 import { db } from "~/drizzle/config.server";
 import { drafts } from "~/drizzle/schema.server";
 import { eq } from "drizzle-orm";
@@ -19,7 +19,7 @@ type ImageJob = {
   createdAt: number;
 };
 
-let queue: ImageJob[] = [];
+const queue: ImageJob[] = [];
 let processing = false;
 let activeJobs = 0;
 let shuttingDown = false;
@@ -69,6 +69,11 @@ async function processJob(job: ImageJob) {
   console.log(`[ImageQueue] Processing job ${job.id} (attempt ${job.attempts + 1})`);
 
   try {
+    if (!canSyncImagesToR2()) {
+      console.warn("[ImageQueue] R2 integration unavailable, skipping image sync");
+      return;
+    }
+
     // Load draft from database
     const result = await draftByPrettyUrl(job.urlName);
     if (!result) {

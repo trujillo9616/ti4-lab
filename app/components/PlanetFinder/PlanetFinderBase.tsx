@@ -9,7 +9,14 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import {
   getSystemGameSet,
   searchableSystemData,
@@ -71,7 +78,7 @@ export function PlanetFinderBase({
     return terms;
   }, [activeFilters, searchString]);
 
-  const isValidSystem = (system: System) => {
+  const isValidSystem = useCallback((system: System) => {
     return (
       availableSystemIds.includes(system.id) ||
       system.type === "HYPERLANE" ||
@@ -80,7 +87,7 @@ export function PlanetFinderBase({
         system.type === "GREEN" &&
         factionPool.includes(system.faction))
     );
-  };
+  }, [allowHomePlanetSearch, availableSystemIds, factionPool]);
 
   const systems = useMemo(() => {
     if (combinedSearchTerms.length === 0) return [];
@@ -111,7 +118,7 @@ export function PlanetFinderBase({
           return -1;
         return 0;
       });
-  }, [combinedSearchTerms, availableSystemIds, usedSystemIds]);
+  }, [combinedSearchTerms, isValidSystem, usedSystemIds]);
 
   const { itemRefs, resetFocus } = useArrowFocus(systems, (idx) => {
     if (idx <= 0) return;
@@ -126,9 +133,19 @@ export function PlanetFinderBase({
         itemRefs.current[0]?.focus();
       }, 150);
     }
-  }, [opened]);
+  }, [itemRefs, opened]);
 
   const hasActiveFilters = activeFilters.length > 0 || searchString.length > 0;
+
+  const handleSystemSelectKeyUp = (
+    event: ReactKeyboardEvent<HTMLDivElement>,
+    system: System,
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSystemSelected(system);
+    }
+  };
 
   return (
     <Modal
@@ -192,7 +209,7 @@ export function PlanetFinderBase({
                       style={{ cursor: "pointer" }}
                       onClick={() => setSearchString("")}
                     >
-                      "{searchString}" ×
+                      &quot;{searchString}&quot; ×
                     </Badge>
                   )}
                   <Button
@@ -274,7 +291,9 @@ export function PlanetFinderBase({
                     if (!itemRefs.current || !el) return;
                     itemRefs.current[idx + 1] = el;
                   }}
+                  role="button"
                   onMouseDown={() => onSystemSelected(system)}
+                  onKeyUp={(event) => handleSystemSelectKeyUp(event, system)}
                 >
                   <Group gap="sm" wrap="wrap" style={{ flex: 1 }}>
                     <Group gap={4} wrap="nowrap">

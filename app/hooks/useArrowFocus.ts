@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useArrowFocus<T>(
   data: T[],
@@ -11,28 +11,31 @@ export function useArrowFocus<T>(
     if (itemRefs.current[selectedIdx]) itemRefs.current[selectedIdx].focus();
   }, [selectedIdx]);
 
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowUp":
+          selectIdx((prevIndex) => (prevIndex > -1 ? prevIndex - 1 : prevIndex));
+          break;
+        case "ArrowDown":
+          selectIdx((prevIndex) =>
+            prevIndex < data.length - 1 ? prevIndex + 1 : prevIndex,
+          );
+          break;
+        case "Enter":
+          if (selectedIdx > -1) onSelectItem(selectedIdx);
+          break;
+        default:
+          break;
+      }
+    },
+    [data.length, onSelectItem, selectedIdx],
+  );
+
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [data]);
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    switch (e.key) {
-      case "ArrowUp":
-        selectIdx((prevIndex) => (prevIndex > -1 ? prevIndex - 1 : prevIndex));
-        break;
-      case "ArrowDown":
-        selectIdx((prevIndex) =>
-          prevIndex < data.length - 1 ? prevIndex + 1 : prevIndex,
-        );
-        break;
-      case "Enter":
-        if (selectedIdx > -1) onSelectItem(selectedIdx);
-        break;
-      default:
-        break;
-    }
-  };
+  }, [handleKeyDown]);
 
   const resetFocus = () => {
     selectIdx(0);

@@ -1,6 +1,6 @@
 import { Hex } from "../Hex";
 import { OpenTile } from "~/types";
-import { useContext } from "react";
+import { useContext, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { MapContext } from "~/contexts/MapContext";
 
 import classes from "./Tiles.module.css";
@@ -27,6 +27,14 @@ export function EmptyTile({
 }: Props) {
   const { radius } = useContext(MapContext);
 
+  const handleKeyUp = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!onSelect || event.currentTarget !== event.target) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect();
+    }
+  };
+
   const droppableClass = droppable
     ? hoverEffects
       ? classes.droppable
@@ -52,7 +60,10 @@ export function EmptyTile({
   return (
     <div
       onClick={onSelect}
+      onKeyUp={handleKeyUp}
+      role={onSelect ? "button" : undefined}
       style={{ cursor: onSelect ? "pointer" : undefined }}
+      tabIndex={onSelect ? 0 : undefined}
     >
       <Hex
         id={`${mapId}-empty`}

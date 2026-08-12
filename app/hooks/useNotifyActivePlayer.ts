@@ -16,20 +16,14 @@ export function useNotifyActivePlayer() {
     requestNotificationPermission();
   }, []);
 
-  const handleNotify = () => {
-    const title = "It's your turn to draft!";
-    const options = {
-      icon: "/icon.png",
-      badge: "/badge.png",
-    };
-    showNotification(title, options);
-    playNotificationSound();
-  };
-
   useEffect(() => {
     if (activePlayerId === undefined || selectedPlayer === undefined) return;
-    if (activePlayerId === selectedPlayer) {
-      handleNotify();
-    }
-  }, [activePlayerId === selectedPlayer]);
+    if (activePlayerId !== selectedPlayer) return;
+
+    showNotification("It's your turn to draft!", {
+      icon: "/icon.png",
+      badge: "/badge.png",
+    });
+    playNotificationSound();
+  }, [activePlayerId, selectedPlayer]);
 }

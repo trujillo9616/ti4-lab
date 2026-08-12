@@ -118,7 +118,7 @@ function LegendaryDisplay({ count }: { count: number | null }) {
   );
 }
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const slug = params.slug;
   if (!slug) {
     throw new Response("Map slug required", { status: 400 });
@@ -132,15 +132,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   // Increment views
   const views = await incrementPresetMapViews(preset.id);
 
-  // Get client IP for like status (simplified - in production use proper IP detection)
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("cf-connecting-ip") ??
-    "unknown";
-
   return {
     preset: { ...preset, views },
-    ip,
   };
 };
 
@@ -185,7 +178,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export default function MapDetail() {
-  const { preset, ip } = useLoaderData<typeof loader>();
+  const { preset } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState({

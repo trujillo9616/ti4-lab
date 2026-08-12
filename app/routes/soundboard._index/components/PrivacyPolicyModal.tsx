@@ -19,9 +19,9 @@ export function PrivacyPolicyModal({ opened, onClose, onAccept }: Props) {
       </Text>
 
       <Text size="sm" mb="md">
-        This Privacy Policy describes how TI4 Lab ("we," "our," or "us")
-        collects, uses, and shares your personal information when you use our
-        Application.
+        This Privacy Policy describes how TI4 Lab (&quot;we,&quot; &quot;our,&quot;
+        or &quot;us&quot;) collects, uses, and shares your personal information
+        when you use our Application.
       </Text>
 
       <Text fw={600} size="sm" mb="xs">
@@ -32,7 +32,7 @@ export function PrivacyPolicyModal({ opened, onClose, onAccept }: Props) {
         Application, including:
       </Text>
       <Text size="sm" ml="md" mb="md">
-        • Spotify account information (through Spotify's API)
+        • Spotify account information (through Spotify&apos;s API)
         <br />
         • Usage data and preferences
         <br />• Technical information about your device and browser

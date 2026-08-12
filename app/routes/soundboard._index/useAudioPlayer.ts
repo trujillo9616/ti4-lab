@@ -18,6 +18,8 @@ type VoiceLineMemory = {
   };
 };
 
+type AnnouncerLineType = keyof typeof announcerAudios;
+
 // Define the type for a queued voice line
 type QueuedVoiceLine = {
   factionId: FactionId | "announcer";
@@ -56,7 +58,7 @@ export function useAudioPlayer({
   const [voiceLineMemory, setVoiceLineMemory] = useState<VoiceLineMemory>({});
   const [loadingAudio, setLoadingAudio] = useState<string | null>(null);
   const [currentAudio, setCurrentAudio] = useState<AudioEntry | null>(null);
-  const [volume, setVolume] = useState(1);
+  const [volume] = useState(1);
   const voiceLineRef = useRef<Howl | null>(null);
   const [isWarMode, setIsWarMode] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
@@ -242,28 +244,31 @@ export function useAudioPlayer({
 
     // Handle announcer types differently
     if (factionId === "announcer") {
+      const announcerType = type as AnnouncerLineType;
+      const announcerEntries = announcerAudios[announcerType] ?? [];
+
       // Get all possible lines for this announcer type
-      const allPossibleLines =
-        announcerAudios[type as keyof typeof announcerAudios]?.map(
-          (entry: any) => entry.url,
-        ) || [];
+      const allPossibleLines = announcerEntries.map((entry) => entry.url);
       if (!allPossibleLines?.length) return;
 
       // Get previously played lines for announcer
       const playedLines = voiceLineMemory["announcer"]?.[type] || [];
 
       // Filter out previously played lines
-      const availableLines = allPossibleLines.filter(
-        (line: string) => !playedLines.includes(line),
+      const availableEntries = announcerEntries.filter(
+        (entry) => !playedLines.includes(entry.url),
       );
 
-      const shouldResetMemory = availableLines.length === 0;
+      const shouldResetMemory = availableEntries.length === 0;
 
       // If no new lines available, reset memory and use all lines again
       // Otherwise, select from available lines
-      const selectedEntry = shouldResetMemory
-        ? getRandomAudioEntry("announcer" as any, type)
-        : getRandomAudioEntry("announcer" as any, type, availableLines);
+      const selectableEntries = shouldResetMemory
+        ? announcerEntries
+        : availableEntries;
+      const selectedEntry =
+        selectableEntries[Math.floor(Math.random() * selectableEntries.length)] ??
+        null;
       if (!selectedEntry) return;
 
       // Determine what the new voice line list should be
@@ -287,7 +292,6 @@ export function useAudioPlayer({
       playLine(
         selectedEntry.url,
         false, // announcer never starts battle
-        isFromQueue,
       );
       return;
     }
@@ -344,13 +348,12 @@ export function useAudioPlayer({
     }));
 
     setCurrentAudio(selectedEntry);
-    playLine(selectedEntry.url, shouldStartBattle, isFromQueue);
+    playLine(selectedEntry.url, shouldStartBattle);
   };
 
   const playLine = (
     src: string,
     shouldStartBattle: boolean,
-    isFromQueue: boolean = false,
   ) => {
     // Play voice line directly
     const timeout = shouldStartBattle ? 500 : 0;

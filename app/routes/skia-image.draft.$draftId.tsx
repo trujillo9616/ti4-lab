@@ -1,5 +1,4 @@
-import { data, LoaderFunctionArgs } from "react-router";
-import { useLoaderData } from "react-router";
+import { data, LoaderFunctionArgs, useLoaderData } from "react-router";
 import { draftByPrettyUrl } from "~/drizzle/draft.server";
 import { Draft } from "~/types";
 import { generateDraftImage } from "~/skiaRendering/imageGenerator.server";

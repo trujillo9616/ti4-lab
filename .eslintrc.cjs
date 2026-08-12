@@ -73,9 +73,10 @@ module.exports = {
       ],
       rules: {
         "no-unused-vars": "off", // or "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": "off",
         "unused-imports/no-unused-imports": "error",
         "unused-imports/no-unused-vars": [
-            "warn",
+            "error",
             {
                 "vars": "all",
                 "varsIgnorePattern": "^_",
@@ -91,6 +92,23 @@ module.exports = {
       files: [".eslintrc.cjs"],
       env: {
         node: true,
+      },
+    },
+    {
+      files: [
+        "server.ts",
+        "sync-voices-wrangler.js",
+        "scripts/**/*.{js,ts}",
+        "**/*.server.{js,jsx,ts,tsx}",
+      ],
+      env: {
+        node: true,
+      },
+    },
+    {
+      files: ["app/env.server.ts", "app/discord/bot.server.ts"],
+      rules: {
+        "no-var": "off",
       },
     },
   ],

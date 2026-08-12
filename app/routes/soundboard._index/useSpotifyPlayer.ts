@@ -165,7 +165,19 @@ export function useSpotifyPlayer(
   };
 
   useEffect(() => {
-    if (accessToken) getCurrentPlayback();
+    if (!accessToken) return;
+
+    let cancelled = false;
+
+    void spotifyApi.getCurrentPlayback(accessToken).then((playback) => {
+      if (!cancelled) {
+        setCurrentPlayback(playback);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [accessToken]);
 
   return {

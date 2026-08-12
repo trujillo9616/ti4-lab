@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Text } from "@mantine/core";
 import "./AnimatedText.css";
 
@@ -17,9 +17,10 @@ export function AnimatedText({ text }: Props) {
   const [items, setItems] = useState<TextItem[]>(() => [
     { text, key: keyRef.current, state: "active" },
   ]);
+  const visibleText = items.find((item) => item.state !== "exiting")?.text;
 
   useEffect(() => {
-    if (text === items.find((i) => i.state !== "exiting")?.text) return;
+    if (text === visibleText) return;
 
     keyRef.current += 1;
     const newKey = keyRef.current;
@@ -49,7 +50,7 @@ export function AnimatedText({ text }: Props) {
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [text]);
+  }, [text, visibleText]);
 
   return (
     <div className="fading-text-wrapper">

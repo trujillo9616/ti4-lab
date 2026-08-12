@@ -22,9 +22,10 @@ const rest = new REST().setToken(token);
     const data = await rest.put(Routes.applicationCommands(clientId), {
       body: commands,
     });
+    const reloadedCommandCount = Array.isArray(data) ? data.length : 0;
 
     console.log(
-      `Successfully reloaded ${(data as any[]).length} application (/) commands.`,
+      `Successfully reloaded ${reloadedCommandCount} application (/) commands.`,
     );
   } catch (error) {
     // And of course, make sure you catch and log any errors!

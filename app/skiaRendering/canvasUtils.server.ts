@@ -207,7 +207,7 @@ export function createCanvas(width: number, height: number): {
   ctx: CanvasRenderingContext2D;
 } {
   const canvas = new Canvas(width, height);
-  const ctx = canvas.getContext("2d") as any as CanvasRenderingContext2D;
+  const ctx = canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
   return { canvas, ctx };
 }
 
@@ -231,7 +231,7 @@ export function withContext(
  */
 export function drawRotatedImage(
   ctx: CanvasRenderingContext2D,
-  image: any,
+  image: CanvasImageSource,
   x: number,
   y: number,
   size: number,

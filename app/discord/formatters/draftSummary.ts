@@ -99,7 +99,7 @@ function formatPlayerName(
   activePlayerId: number | undefined,
   nextPlayerId: number | undefined,
 ): string {
-  let name = player.name;
+  const name = player.name;
 
   if (player.id === activePlayerId) {
     return `**__${name}   <- CURRENTLY DRAFTING__**`;

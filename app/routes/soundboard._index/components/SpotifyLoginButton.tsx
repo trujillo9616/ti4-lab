@@ -1,6 +1,5 @@
 import querystring from "querystring";
 import { Button } from "@mantine/core";
-import { IconBrandSpotify } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { EULAModal } from "./EULAModal";
 import { PrivacyPolicyModal } from "./PrivacyPolicyModal";

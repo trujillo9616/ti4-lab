@@ -1,4 +1,4 @@
-import { Draft, Slice, Tile, System } from "~/types";
+import { Draft, Slice, Tile, System , Wormhole, TechSpecialty } from "~/types";
 import { calcHexHeight } from "~/utils/positioning";
 import { hydratePresetMap } from "~/utils/map";
 import {
@@ -21,8 +21,6 @@ import {
   drawMap,
 } from "./canvasUtils.server";
 import { systemData } from "~/data/systemData";
-import { Wormhole, TechSpecialty } from "~/types";
-import { drawWormhole } from "./renderers/wormholeRenderer.server";
 import { factions } from "~/data/factionData";
 import { draftConfig } from "~/draft";
 import {

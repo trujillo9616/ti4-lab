@@ -56,10 +56,10 @@ export function drawHexTile(
     const system = systemData[tile.systemId];
     if (system) {
       const hasGravityRift = system.anomalies.includes("GRAVITY_RIFT");
-      const items = [...system.planets, ...system.wormholes];
-      if (hasGravityRift) items.push("GRAVITY_RIFT" as any);
+      const totalItems =
+        system.planets.length + system.wormholes.length + (hasGravityRift ? 1 : 0);
 
-      if (items.length > 0) {
+      if (totalItems > 0) {
         drawPlanetsWormholesAndGravityRifts(
           ctx,
           system.planets,

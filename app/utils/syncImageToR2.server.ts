@@ -1,32 +1,68 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const R2_BUCKET_NAME = "ti4-lab-images";
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY!;
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL!;
+const missingR2EnvironmentVariablesError =
+  "Missing R2 environment variables: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL";
 
-if (process.env.R2_INTEGRATION_DISABLED !== "true") {
-  if (
-    !R2_ACCOUNT_ID ||
-    !R2_ACCESS_KEY_ID ||
-    !R2_SECRET_ACCESS_KEY ||
-    !R2_PUBLIC_URL
-  ) {
-    throw new Error(
-      "Missing R2 environment variables: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL",
-    );
-  }
+type R2Config = {
+  accountId: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  publicUrl: string;
+};
+
+let s3Client: S3Client | null = null;
+
+export function canSyncImagesToR2() {
+  return Boolean(getR2Config());
 }
 
-const s3Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID,
-    secretAccessKey: R2_SECRET_ACCESS_KEY,
-  },
-});
+function getR2Config(): R2Config | null {
+  if (process.env.R2_INTEGRATION_DISABLED === "true") {
+    return null;
+  }
+
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const publicUrl = process.env.R2_PUBLIC_URL;
+
+  if (!accountId || !accessKeyId || !secretAccessKey || !publicUrl) {
+    return null;
+  }
+
+  return {
+    accountId,
+    accessKeyId,
+    secretAccessKey,
+    publicUrl,
+  };
+}
+
+function requireR2Config(): R2Config {
+  const config = getR2Config();
+  if (!config) {
+    throw new Error(missingR2EnvironmentVariablesError);
+  }
+  return config;
+}
+
+function getS3Client(config: R2Config) {
+  if (s3Client) {
+    return s3Client;
+  }
+
+  s3Client = new S3Client({
+    region: "auto",
+    endpoint: `https://${config.accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+    },
+  });
+
+  return s3Client;
+}
 
 export async function syncImageToR2(
   draftId: string,
@@ -45,7 +81,10 @@ export async function syncPresetMapImageToR2(
 }
 
 async function syncPngToR2(key: string, imageBuffer: Buffer): Promise<string> {
-  await s3Client.send(
+  const config = requireR2Config();
+  const client = getS3Client(config);
+
+  await client.send(
     new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key: key,
@@ -54,5 +93,5 @@ async function syncPngToR2(key: string, imageBuffer: Buffer): Promise<string> {
     }),
   );
 
-  return `${R2_PUBLIC_URL}/${key}`;
+  return `${config.publicUrl}/${key}`;
 }

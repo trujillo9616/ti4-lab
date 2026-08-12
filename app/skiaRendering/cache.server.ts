@@ -1,6 +1,6 @@
 import { loadImage, FontLibrary } from "skia-canvas";
 import path from "path";
-import { TechSpecialty, Anomaly, FactionId } from "~/types";
+import { TechSpecialty, Anomaly } from "~/types";
 import {
   TECH_ICON_PATHS,
   ANOMALY_IMAGE_PATHS,
@@ -8,22 +8,24 @@ import {
 } from "./constants";
 import { factions } from "~/data/factionData";
 
+type CachedImage = CanvasImageSource;
+
 // Cache for loaded tech icons
-let techIconCache: Record<TechSpecialty, any> | null = null;
+let techIconCache: Partial<Record<TechSpecialty, CachedImage>> | null = null;
 // Cache for loaded anomaly images
-let anomalyImageCache: Record<Anomaly, any> | null = null;
+let anomalyImageCache: Partial<Record<Anomaly, CachedImage>> | null = null;
 // Cache for loaded legendary planet images
-let legendaryImageCache: Record<string, any> | null = null;
+let legendaryImageCache: Record<string, CachedImage> | null = null;
 // Cache for legendary icon
-let legendaryIconCache: any | null = null;
+let legendaryIconCache: CachedImage | null = null;
 // Cache for faction icons
-let factionIconCache: Record<string, any> | null = null;
+let factionIconCache: Record<string, CachedImage> | null = null;
 // Cache for background tile image
-let backgroundTileCache: any | null = null;
+let backgroundTileCache: CachedImage | null = null;
 // Cache for logo image
-let logoCache: any | null = null;
+let logoCache: CachedImage | null = null;
 // Cache for trade station image
-let tradeStationCache: any | null = null;
+let tradeStationCache: CachedImage | null = null;
 
 export function initializeFonts(): void {
   const orbitronPath = path.join(process.cwd(), "public", "orbitron.ttf");
@@ -39,11 +41,12 @@ export function initializeFonts(): void {
 export async function loadAllAssets(): Promise<void> {
   // Load tech icons if not cached
   if (!techIconCache) {
-    techIconCache = {} as Record<TechSpecialty, any>;
+    techIconCache = {} as Partial<Record<TechSpecialty, CachedImage>>;
     for (const [tech, filename] of Object.entries(TECH_ICON_PATHS)) {
       const iconPath = path.join(process.cwd(), "public", filename);
       try {
-        techIconCache[tech as TechSpecialty] = await loadImage(iconPath);
+        techIconCache[tech as TechSpecialty] =
+          (await loadImage(iconPath)) as unknown as CachedImage;
       } catch (error) {
         console.error(`Failed to load tech icon ${tech}:`, error);
       }
@@ -52,12 +55,13 @@ export async function loadAllAssets(): Promise<void> {
 
   // Load anomaly images if not cached
   if (!anomalyImageCache) {
-    anomalyImageCache = {} as Record<Anomaly, any>;
+    anomalyImageCache = {} as Partial<Record<Anomaly, CachedImage>>;
     for (const [anomaly, filename] of Object.entries(ANOMALY_IMAGE_PATHS)) {
       if (filename) {
         const imagePath = path.join(process.cwd(), "public", filename);
         try {
-          anomalyImageCache[anomaly as Anomaly] = await loadImage(imagePath);
+          anomalyImageCache[anomaly as Anomaly] =
+            (await loadImage(imagePath)) as unknown as CachedImage;
         } catch (error) {
           console.error(`Failed to load anomaly image ${anomaly}:`, error);
         }
@@ -67,11 +71,12 @@ export async function loadAllAssets(): Promise<void> {
 
   // Load legendary planet images if not cached
   if (!legendaryImageCache) {
-    legendaryImageCache = {} as Record<string, any>;
+    legendaryImageCache = {} as Record<string, CachedImage>;
     for (const [systemId, config] of Object.entries(LEGENDARY_IMAGE_PATHS)) {
       const imagePath = path.join(process.cwd(), "public", config.path);
       try {
-        legendaryImageCache[systemId] = await loadImage(imagePath);
+        legendaryImageCache[systemId] =
+          (await loadImage(imagePath)) as unknown as CachedImage;
       } catch (error) {
         console.error(
           `Failed to load legendary image for system ${systemId}:`,
@@ -89,7 +94,8 @@ export async function loadAllAssets(): Promise<void> {
       "legendary.webp",
     );
     try {
-      legendaryIconCache = await loadImage(legendaryIconPath);
+      legendaryIconCache =
+        (await loadImage(legendaryIconPath)) as unknown as CachedImage;
     } catch (error) {
       console.error("Failed to load legendary icon:", error);
     }
@@ -97,11 +103,12 @@ export async function loadAllAssets(): Promise<void> {
 
   // Load faction icons if not cached
   if (!factionIconCache) {
-    factionIconCache = {} as Record<string, any>;
+    factionIconCache = {} as Record<string, CachedImage>;
     for (const [factionId, factionData] of Object.entries(factions)) {
       const iconPath = path.join(process.cwd(), "public", factionData.iconPath);
       try {
-        factionIconCache[factionId] = await loadImage(iconPath);
+        factionIconCache[factionId] =
+          (await loadImage(iconPath)) as unknown as CachedImage;
       } catch (error) {
         console.error(`Failed to load faction icon ${factionId}:`, error);
       }
@@ -112,7 +119,8 @@ export async function loadAllAssets(): Promise<void> {
   if (!backgroundTileCache) {
     const bgTilePath = path.join(process.cwd(), "public", "tilebg.jpg");
     try {
-      backgroundTileCache = await loadImage(bgTilePath);
+      backgroundTileCache =
+        (await loadImage(bgTilePath)) as unknown as CachedImage;
     } catch (error) {
       console.error("Failed to load background tile:", error);
     }
@@ -122,7 +130,7 @@ export async function loadAllAssets(): Promise<void> {
   if (!logoCache) {
     const logoPath = path.join(process.cwd(), "public", "logo.webp");
     try {
-      logoCache = await loadImage(logoPath);
+      logoCache = (await loadImage(logoPath)) as unknown as CachedImage;
     } catch (error) {
       console.error("Failed to load logo:", error);
     }
@@ -136,7 +144,8 @@ export async function loadAllAssets(): Promise<void> {
       "tradestation.png",
     );
     try {
-      tradeStationCache = await loadImage(tradeStationPath);
+      tradeStationCache =
+        (await loadImage(tradeStationPath)) as unknown as CachedImage;
     } catch (error) {
       console.error("Failed to load trade station image:", error);
     }

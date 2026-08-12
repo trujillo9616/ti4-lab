@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Box, Group, Paper, Stack, Text, TextInput } from "@mantine/core";
+import { Box, Group, Paper, Stack, TextInput } from "@mantine/core";
 import { PlayerColor } from "./types";
 import classes from "./SliceCard.module.css";
 import { Titles } from "~/components/Titles";

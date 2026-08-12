@@ -4,8 +4,8 @@ import {
   data,
   redirect,
   MetaFunction,
+  useLoaderData,
 } from "react-router";
-import { useLoaderData } from "react-router";
 import { eq } from "drizzle-orm";
 import { useEffect } from "react";
 import { useDraft } from "~/draftStore";
@@ -71,6 +71,10 @@ export default function RunningDraft() {
   const draft = draftStore.draft;
   const settings = draft.settings;
   const draftActions = draftStore.draftActions;
+  const hydrateDraft = draftActions.hydrate;
+  const setSelectedPlayer = draftActions.setSelectedPlayer;
+  const updateDraftState = draftActions.update;
+  const disableReplayMode = draftStore.replayActions.disableReplayMode;
   const selectedPlayer = draftStore.selectedPlayer;
   const { draftFinished } = useHydratedDraft();
   const isPresetMapDraft = settings.draftGameMode === "presetMap";
@@ -82,25 +86,39 @@ export default function RunningDraft() {
     });
   useEffect(() => {
     if (!socket) return;
-    socket.on("syncDraft", (data) => {
+
+    const handleSyncDraft = (data: string) => {
       const draft = JSON.parse(data) as Draft;
 
-      draftStore.draftActions.update(result.id!, draft);
-    });
-  }, [socket]);
+      updateDraftState(result.id!, draft);
+    };
+
+    socket.on("syncDraft", handleSyncDraft);
+
+    return () => {
+      socket.off("syncDraft", handleSyncDraft);
+    };
+  }, [result.id, socket, updateDraftState]);
 
   // pre-seed store with loaded persisted draft
   useEffect(() => {
-    draftStore.draftActions.hydrate(result.id!, result.urlName!, result.data);
-    draftStore.replayActions.disableReplayMode();
+    hydrateDraft(result.id!, result.urlName!, result.data);
+    disableReplayMode();
 
     const storedSelectedPlayer = localStorage.getItem(
       `draft:player:${result.id}`,
     );
     if (storedSelectedPlayer) {
-      draftActions.setSelectedPlayer(parseInt(storedSelectedPlayer));
+      setSelectedPlayer(parseInt(storedSelectedPlayer, 10));
     }
-  }, []);
+  }, [
+    disableReplayMode,
+    hydrateDraft,
+    result.data,
+    result.id,
+    result.urlName,
+    setSelectedPlayer,
+  ]);
 
   if (!draftStore.hydrated) return <LoadingOverlay />;
 

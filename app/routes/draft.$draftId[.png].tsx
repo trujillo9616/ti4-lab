@@ -6,7 +6,7 @@ import {
   generateDraftSlicesImage,
   generatePresetDraftImage,
 } from "~/skiaRendering/slicesImageGenerator.server";
-import { syncImageToR2 } from "~/utils/syncImageToR2.server";
+import { canSyncImagesToR2, syncImageToR2 } from "~/utils/syncImageToR2.server";
 import { db } from "~/drizzle/config.server";
 import { drafts } from "~/drizzle/schema.server";
 import { eq } from "drizzle-orm";
@@ -48,8 +48,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       ? await generatePresetDraftImage(draft, draftId)
       : await generateDraftSlicesImage(draft, draftId);
 
-  // Dev mode: return image directly
-  if (devMode) {
+  // Dev mode or unavailable R2 integration: return image directly
+  if (devMode || !canSyncImagesToR2()) {
     return new Response(imageBuffer, {
       headers: {
         "Content-Type": "image/png",

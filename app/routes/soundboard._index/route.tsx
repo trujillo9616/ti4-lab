@@ -1,34 +1,34 @@
-import { Fragment, useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Text,
   Container,
   Button,
-  Table,
   Group,
   Slider,
   Stack,
-  TextInput,
   Image,
   Box,
   Paper,
   Select,
-  Modal,
-  List,
   Alert,
   Badge,
   Popover,
   ScrollArea,
   ActionIcon,
   Tooltip,
-  Anchor,
 } from "@mantine/core";
 import { FactionId } from "~/types";
 import { FactionIcon } from "~/components/icons/FactionIcon";
 import { factions } from "~/data/factionData";
 import { factionAudios, LineType } from "~/data/factionAudios";
 import { VoiceLineButton } from "./components/VoiceLineButton";
-import { ActionFunctionArgs, data, redirect } from "react-router";
-import { Form, useLoaderData, useSearchParams } from "react-router";
+import {
+  data,
+  Form,
+  redirect,
+  useLoaderData,
+  useSearchParams,
+} from "react-router";
 import { useAudioPlayer } from "./useAudioPlayer";
 import { SpotifyLoginButton } from "./components/SpotifyLoginButton";
 import { useSpotifyLogin } from "./useSpotifyLogin";
@@ -40,7 +40,6 @@ import { SpotifyPlaylistUI } from "./components/SpotifyPlaylistUI";
 import { createSession } from "~/drizzle/soundboardSession.server";
 import { useSocketConnection } from "~/useSocketConnection";
 import QRCode from "react-qr-code";
-import { SpotifyPlaybackState } from "~/vendors/spotifyApi";
 import {
   IconMusic,
   IconRefresh,
@@ -48,15 +47,10 @@ import {
   IconSquare,
   IconVolume,
   IconVolumeOff,
-  IconDeviceDesktop,
-  IconDeviceMobile,
-  IconDeviceSpeaker,
-  IconDeviceUnknown,
   IconPlayerSkipForward,
   IconTrash,
   IconX,
   IconList,
-  IconInfoCircle,
   IconMicrophone2,
 } from "@tabler/icons-react";
 import styles from "./styles.module.css";
@@ -213,92 +207,6 @@ const VoiceLineQueue = ({ queue, onRemove, onClear }: VoiceLineQueueProps) => {
   );
 };
 
-interface SpotifyPlaybackUIProps {
-  currentPlayback: SpotifyPlaybackState | null;
-}
-
-const SpotifyPlaybackUI = ({ currentPlayback }: SpotifyPlaybackUIProps) => {
-  if (!currentPlayback) return <></>;
-
-  return (
-    <>
-      <Group justify="space-between" align="center">
-        <Image
-          src="/spotifylogo.svg"
-          alt="Spotify Logo"
-          style={{ width: 90, height: 24 }}
-        />
-        <Button
-          variant="outline"
-          color="red"
-          size="xs"
-          component="a"
-          href="/voices/logout"
-        >
-          Logout
-        </Button>
-      </Group>
-      <Paper radius="md" p="xs" withBorder>
-        <Group gap="md" wrap="nowrap">
-          <Image
-            src={currentPlayback.albumImage.url}
-            alt="Album Art"
-            width={currentPlayback.albumImage.width}
-            height={currentPlayback.albumImage.height}
-            radius="sm"
-          />
-          <Stack gap={2} style={{ overflow: "hidden" }}>
-            <Tooltip label={currentPlayback.track.name} openDelay={500}>
-              <Text
-                fw={500}
-                size="sm"
-                component="a"
-                href={currentPlayback.track.external_urls.spotify}
-                target="_blank"
-                className={styles.hoverableTextLink}
-                truncate
-                style={{ maxWidth: "100%" }}
-              >
-                {currentPlayback.track.name}
-              </Text>
-            </Tooltip>
-            <Group gap={0}>
-              {currentPlayback.artists.map(
-                (
-                  artist: { id: string; name: string; uri: string },
-                  index: number,
-                ) => (
-                  <Fragment key={artist.id}>
-                    {index > 0 && (
-                      <Text c="dimmed" size="sm">
-                        {" "}
-                        ,{" "}
-                      </Text>
-                    )}
-                    <Tooltip label={artist.name} openDelay={500}>
-                      <Text
-                        className={styles.hoverableTextLink}
-                        component="a"
-                        href={artist.uri}
-                        target="_blank"
-                        c="dimmed"
-                        size="sm"
-                        truncate
-                      >
-                        {artist.name}
-                      </Text>
-                    </Tooltip>
-                  </Fragment>
-                ),
-              )}
-            </Group>
-          </Stack>
-        </Group>
-      </Paper>
-    </>
-  );
-};
-
 const DEFAULT_FACTION_SLOTS: FactionId[] = [
   "arborec",
   "argent",
@@ -337,6 +245,11 @@ export default function SoundboardMaster() {
     return DEFAULT_FACTION_SLOTS;
   });
   const [isVoiceLinePlaying, setIsVoiceLinePlaying] = useState(false);
+  const factionSlotsRef = useRef(factionSlots);
+
+  useEffect(() => {
+    factionSlotsRef.current = factionSlots;
+  }, [factionSlots]);
 
   useEffect(() => {
     if (!playlistId) {
@@ -353,18 +266,6 @@ export default function SoundboardMaster() {
     useSocketConnection({
       onConnect: () => socket?.emit("joinSoundboardSession", sessionId),
     });
-
-  useEffect(() => {
-    if (!socket || !sessionId) return;
-    socket.emit("joinSoundboardSession", sessionId);
-    socket.on("requestSessionData", () =>
-      socket.emit("sendSessionData", sessionId, factionSlots),
-    );
-    socket.on("playLine", (factionId, lineType) =>
-      playAudio(factionId, lineType),
-    );
-    socket.on("stopLine", () => stopAudio());
-  }, [sessionId, socket]);
 
   const {
     playAudio,
@@ -395,6 +296,40 @@ export default function SoundboardMaster() {
       setIsVoiceLinePlaying(false);
     },
   });
+  const playAudioRef = useRef(playAudio);
+  const stopAudioRef = useRef(stopAudio);
+  const getDevicesRef = useRef(getDevices);
+
+  useEffect(() => {
+    playAudioRef.current = playAudio;
+    stopAudioRef.current = stopAudio;
+    getDevicesRef.current = getDevices;
+  }, [getDevices, playAudio, stopAudio]);
+
+  useEffect(() => {
+    if (!socket || !sessionId) return;
+
+    const handleRequestSessionData = () => {
+      socket.emit("sendSessionData", sessionId, factionSlotsRef.current);
+    };
+    const handlePlayLine = (factionId: FactionId, lineType: LineType) => {
+      playAudioRef.current(factionId, lineType);
+    };
+    const handleStopLine = () => {
+      stopAudioRef.current();
+    };
+
+    socket.emit("joinSoundboardSession", sessionId);
+    socket.on("requestSessionData", handleRequestSessionData);
+    socket.on("playLine", handlePlayLine);
+    socket.on("stopLine", handleStopLine);
+
+    return () => {
+      socket.off("requestSessionData", handleRequestSessionData);
+      socket.off("playLine", handlePlayLine);
+      socket.off("stopLine", handleStopLine);
+    };
+  }, [sessionId, socket]);
 
   // Create lookup maps for queued voice lines for quick checking if a voice line is queued
   const queuedLinesMap = useMemo(() => {
@@ -413,7 +348,9 @@ export default function SoundboardMaster() {
   };
 
   useEffect(() => {
-    if (accessToken) getDevices();
+    if (accessToken) {
+      void getDevicesRef.current();
+    }
   }, [accessToken]);
 
   const handlePlayAudio = async (factionId: FactionId, type: LineType) => {
@@ -948,7 +885,7 @@ export const loader = async () => {
   });
 };
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action() {
   const session = await createSession();
   return redirect(`/voices?session=${session.id}`);
 }

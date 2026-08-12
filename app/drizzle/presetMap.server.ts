@@ -100,16 +100,19 @@ export async function createPresetMap(input: {
   // Check if slug exists, append number if needed
   let slug = baseSlug;
   let counter = 1;
-  while (true) {
+  let slugExists = true;
+  while (slugExists) {
     const existing = await db
       .select({ id: presetMaps.id })
       .from(presetMaps)
       .where(eq(presetMaps.slug, slug))
       .limit(1);
 
-    if (existing.length === 0) break;
-    slug = `${baseSlug}-${counter}`;
-    counter++;
+    slugExists = existing.length > 0;
+    if (slugExists) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
   }
 
   // Compute map statistics
