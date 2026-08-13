@@ -14,7 +14,8 @@
     "db:backup": "flyctl ssh sftp get -a ti4-lab /data/sqlite.db ~/Downloads/ti4-lab_$(date +'%d_%m_%Y').db",
     "db:repair-preset-closed-tiles": "tsx ./scripts/repair-preset-closed-tiles.ts",
     "typecheck": "react-router typegen && tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "test:ci": "vitest run"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.914.0",
