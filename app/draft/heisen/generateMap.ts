@@ -92,6 +92,48 @@ const CORE_SLICE_MAX_OPTIMAL = 8; // Maximum optimal value for a core slice
 const CORE_SLICE_MAX_BALANCE = 6; // Maximum difference between best and worst core slice
 const MIN_RED_TILES = 11; // Minimum red tiles on the map
 
+type HeisenVariantRules = {
+  useCoreSlices: boolean;
+  validateCoreSlices: boolean;
+  minRedTiles: number;
+  minCoreSliceOptimal?: number;
+  maxCoreSliceOptimal?: number;
+  maxCoreSliceBalance?: number;
+};
+
+const getHeisenVariantRules = (
+  type: string,
+): HeisenVariantRules | undefined => {
+  switch (type) {
+    case "heisen":
+      return {
+        useCoreSlices: true,
+        validateCoreSlices: true,
+        minRedTiles: MIN_RED_TILES,
+        minCoreSliceOptimal: CORE_SLICE_MIN_OPTIMAL,
+        maxCoreSliceOptimal: CORE_SLICE_MAX_OPTIMAL,
+        maxCoreSliceBalance: CORE_SLICE_MAX_BALANCE,
+      };
+    case "heisen3p":
+      return {
+        useCoreSlices: true,
+        validateCoreSlices: true,
+        minRedTiles: 8,
+        minCoreSliceOptimal: 1.5,
+        maxCoreSliceOptimal: 9,
+        maxCoreSliceBalance: 7.5,
+      };
+    case "heisen3phyperlane":
+      return {
+        useCoreSlices: false,
+        validateCoreSlices: false,
+        minRedTiles: 6,
+      };
+    default:
+      return undefined;
+  }
+};
+
 export function generateMap(
   settings: DraftSettings,
   systemPool: SystemId[],
@@ -100,6 +142,7 @@ export function generateMap(
 ) {
   const sliceCount = settings.numSlices;
   const config = draftConfig[settings.type];
+  const heisenRules = getHeisenVariantRules(config.type);
   const sliceGenConfig = settings.sliceGenerationConfig;
   const sliceValueModifiers = sliceGenConfig?.sliceValueModifiers;
 
@@ -111,6 +154,8 @@ export function generateMap(
   // this changes between heisen and heisen8p
   const targets: Record<ChoosableTier, number> =
     config.type === "heisen"
+      || config.type === "heisen3p"
+      || config.type === "heisen3phyperlane"
       ? {
           high: 6,
           med: 6,
@@ -231,7 +276,7 @@ export function generateMap(
   // Step 3: Generate and balance the core slices around Mecatol Rex
   // ---------------------------------------------------------------------------------
   // Track which core slice positions are already occupied by alphas/betas/legendaries
-  if (settings.type === "heisen") {
+  if (heisenRules?.useCoreSlices) {
     const coreSlicePositions = CORE_SLICES.flat();
     const occupiedCorePositions: Record<number, SystemId> = {};
 
@@ -325,7 +370,7 @@ export function generateMap(
   // ------------------------------------------------
   // Step 6: Validate map and core slice balance
   // ------------------------------------------------
-  if (settings.type === "heisen" && attempts <= 1000) {
+  if (heisenRules && attempts <= 1000) {
     // Calculate min/max planets across all slices
     const planetCounts = slices.map((slice) =>
       slice.reduce(
@@ -349,18 +394,6 @@ export function generateMap(
     const minTotalSpend = Math.min(...totalSpends);
     const maxTotalSpend = Math.max(...totalSpends);
 
-    const coreSliceValues = calculateCoreSliceValues(
-      CORE_SLICES,
-      chosenMapLocations,
-      sliceValueModifiers,
-    );
-
-    const minCoreSpend = Math.min(...coreSliceValues);
-    const maxCoreSpend = Math.max(...coreSliceValues);
-
-    // Calculate maximum difference between core slices (measure of balance)
-    const coreSliceBalance = maxCoreSpend - minCoreSpend;
-
     // Count total red tiles
     const mapRedCount = Object.values(chosenMapLocations).filter(
       (id) => systemData[id].type === "RED",
@@ -378,11 +411,37 @@ export function generateMap(
     if (maxTotalSpend > maxSliceValue) rejectionReasons.push(`maxTotalSpend=${maxTotalSpend}>${maxSliceValue}`);
     if (minPlanets < 2) rejectionReasons.push(`minPlanets=${minPlanets}<2`);
     if (maxPlanets > 5) rejectionReasons.push(`maxPlanets=${maxPlanets}>5`);
-    if (redTileCount < MIN_RED_TILES) rejectionReasons.push(`redTileCount=${redTileCount}<${MIN_RED_TILES}`);
-    if (config.type === "heisen" && mapStats.totalLegendary > 4) rejectionReasons.push(`totalLegendary=${mapStats.totalLegendary}>4`);
-    if (minCoreSpend < CORE_SLICE_MIN_OPTIMAL) rejectionReasons.push(`minCoreSpend=${minCoreSpend}<${CORE_SLICE_MIN_OPTIMAL}`);
-    if (maxCoreSpend > CORE_SLICE_MAX_OPTIMAL) rejectionReasons.push(`maxCoreSpend=${maxCoreSpend}>${CORE_SLICE_MAX_OPTIMAL}`);
-    if (coreSliceBalance > CORE_SLICE_MAX_BALANCE) rejectionReasons.push(`coreSliceBalance=${coreSliceBalance}>${CORE_SLICE_MAX_BALANCE}`);
+    if (redTileCount < heisenRules.minRedTiles) rejectionReasons.push(`redTileCount=${redTileCount}<${heisenRules.minRedTiles}`);
+    if (mapStats.totalLegendary > 4) rejectionReasons.push(`totalLegendary=${mapStats.totalLegendary}>4`);
+
+    if (heisenRules.validateCoreSlices) {
+      const coreSliceValues = calculateCoreSliceValues(
+        CORE_SLICES,
+        chosenMapLocations,
+        sliceValueModifiers,
+      );
+
+      const minCoreSpend = Math.min(...coreSliceValues);
+      const maxCoreSpend = Math.max(...coreSliceValues);
+      const coreSliceBalance = maxCoreSpend - minCoreSpend;
+
+      if (minCoreSpend < heisenRules.minCoreSliceOptimal!) {
+        rejectionReasons.push(
+          `minCoreSpend=${minCoreSpend}<${heisenRules.minCoreSliceOptimal}`,
+        );
+      }
+      if (maxCoreSpend > heisenRules.maxCoreSliceOptimal!) {
+        rejectionReasons.push(
+          `maxCoreSpend=${maxCoreSpend}>${heisenRules.maxCoreSliceOptimal}`,
+        );
+      }
+      if (coreSliceBalance > heisenRules.maxCoreSliceBalance!) {
+        rejectionReasons.push(
+          `coreSliceBalance=${coreSliceBalance}>${heisenRules.maxCoreSliceBalance}`,
+        );
+      }
+    }
+
     if (hasAdjacentAnomalies(chosenMapLocations)) rejectionReasons.push(`hasAdjacentAnomalies`);
 
     if (rejectionReasons.length > 0) {

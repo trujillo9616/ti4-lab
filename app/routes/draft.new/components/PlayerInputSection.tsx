@@ -50,7 +50,7 @@ export function PlayerInputSection({
               size="compact-xs"
               variant="subtle"
               color="gray"
-              disabled={players.length <= 4}
+              disabled={players.length <= 3}
               onMouseDown={onDecreasePlayers}
             >
               -

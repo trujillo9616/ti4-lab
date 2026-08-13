@@ -52,12 +52,13 @@ export const generateMap = (
   attempts: number = 0,
 ) => {
   const config = draftConfig[settings.type];
+  const generateSlicesFn = config.generateSlices;
   const minorFactionsMode = settings.minorFactionsMode;
   if (
     minorFactionsMode?.mode === "sharedPool" ||
     minorFactionsMode?.mode === "separatePool"
   ) {
-    const slices = generateSlices(
+    const slices = generateSlicesFn(
       settings.numSlices,
       systemPool,
       settings.sliceGenerationConfig,
@@ -72,7 +73,7 @@ export const generateMap = (
   if (minorFactionsMode?.mode === "random") {
     const slices =
       settings.presetSlices ??
-      generateSlices(
+      generateSlicesFn(
         settings.numSlices,
         systemPool,
         settings.sliceGenerationConfig,
@@ -109,7 +110,7 @@ export const generateMap = (
     };
   }
 
-  return coreGenerateMap(settings, systemPool, attempts, generateSlices);
+  return coreGenerateMap(settings, systemPool, attempts, generateSlicesFn);
 };
 
 const validateSlice = (slice: SystemIds, config: SliceGenerationConfig) => {

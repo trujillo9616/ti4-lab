@@ -34,13 +34,25 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 function formatDraftType(type: string, playerCount: number): string {
-  const typeMap: Record<string, string> = {
-    milty: "Milty Draft",
-    miltyeq: "Milty Equidistant Draft",
-    prechoice: "Pre-Choice Draft",
-    raw: "Raw Draft",
-  };
+  let baseName = type;
 
-  const baseName = typeMap[type.replace(/\d+p$/, "")] || type;
+  if (type.startsWith("miltyeq")) {
+    baseName = type.includes("hyperlane")
+      ? "Milty Equidistant Hyperlane Draft"
+      : "Milty Equidistant Draft";
+  } else if (type.startsWith("heisen")) {
+    baseName = type.includes("hyperlane")
+      ? "Nucleus Hyperlane Draft"
+      : "Nucleus Draft";
+  } else if (type.startsWith("milty")) {
+    baseName = type.includes("hyperlane")
+      ? "Milty Hyperlane Draft"
+      : "Milty Draft";
+  } else if (type === "prechoice") {
+    baseName = "Pre-Choice Draft";
+  } else if (type === "raw") {
+    baseName = "Raw Draft";
+  }
+
   return `${baseName} (${playerCount} players)`;
 }

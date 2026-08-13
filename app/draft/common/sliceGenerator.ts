@@ -148,7 +148,16 @@ export function coreGenerateMap(
     minorFactionPool,
   });
 
-  if (!slices) return undefined;
+  if (!slices) {
+    if (attempts > 1000) return undefined;
+    return coreGenerateMap(
+      settings,
+      systemPool,
+      attempts + 1,
+      generateSlices,
+      minorFactionPool,
+    );
+  }
   const usedSystemIds = slices.flat(1);
   const remainingSystemIds = shuffle(
     systemPool.filter((id) => !usedSystemIds.includes(id)),
@@ -168,7 +177,13 @@ export function coreGenerateMap(
   // if we have gone past max attempts, return the map regardless of validation
   if (attempts > 1000) return { map, slices, valid: false };
   if (!validateMap(config, settings, map, slices)) {
-    return coreGenerateMap(settings, systemPool, attempts + 1, generateSlices);
+    return coreGenerateMap(
+      settings,
+      systemPool,
+      attempts + 1,
+      generateSlices,
+      minorFactionPool,
+    );
   }
 
   return { map, slices, valid: true };

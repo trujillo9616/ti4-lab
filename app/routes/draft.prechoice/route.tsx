@@ -147,6 +147,7 @@ export default function DraftPrechoice() {
 
   const mapType = hoveredMapType ?? map.selectedMapType;
   const playerCount = player.players.length;
+  const baseOnlyMode = playerCount === 3;
 
   const tileGameSets = useMemo(() => {
     if (draftMode === "twilightFalls") {
@@ -194,6 +195,7 @@ export default function DraftPrechoice() {
 
   const handleDraftModeChange = (value: string | null) => {
     if (!value) return;
+    if (baseOnlyMode && value !== "base") return;
     setDraftMode(value as "base" | "twilightFalls" | "texasStyle");
   };
 
@@ -445,6 +447,13 @@ export default function DraftPrechoice() {
           />
           <Stack>
             <SectionTitle title="Configuration" />
+            {baseOnlyMode && (
+              <Alert color="yellow" variant="light" mb="sm" title="3-player scope">
+                <Text size="xs">
+                  3-player drafts currently support Base Draft only.
+                </Text>
+              </Alert>
+            )}
             <Tabs
               value={draftMode}
               onChange={handleDraftModeChange}
@@ -452,8 +461,12 @@ export default function DraftPrechoice() {
             >
               <Tabs.List mb="md">
                 <Tabs.Tab value="base">Base Draft</Tabs.Tab>
-                <Tabs.Tab value="twilightFalls">Twilight&apos;s Fall</Tabs.Tab>
-                <Tabs.Tab value="texasStyle">Texas Style</Tabs.Tab>
+                <Tabs.Tab value="twilightFalls" disabled={baseOnlyMode}>
+                  Twilight&apos;s Fall
+                </Tabs.Tab>
+                <Tabs.Tab value="texasStyle" disabled={baseOnlyMode}>
+                  Texas Style
+                </Tabs.Tab>
               </Tabs.List>
 
               <Tabs.Panel value="base">
