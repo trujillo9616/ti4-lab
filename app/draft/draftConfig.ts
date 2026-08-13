@@ -3,13 +3,19 @@
  * during the drafting process.
  */
 import { heisen } from "./heisen";
+import { heisen3p } from "./heisen3p";
+import { heisen3phyperlane } from "./heisen3phyperlane";
 import { heisen8p } from "./heisen8p";
 import { milty } from "./milty";
+import { milty3p } from "./milty3p";
+import { milty3phyperlane } from "./milty3phyperlane";
 import { milty4p } from "./milty4p";
 import { milty5p } from "./milty5p";
 import { milty7p } from "./milty7p";
 import { milty8p } from "./milty8p";
 import { miltyeq } from "./miltyeq";
+import { miltyeq3p } from "./miltyeq3p";
+import { miltyeq3phyperlane } from "./miltyeq3phyperlane";
 import { miltyeq4p } from "./miltyeq4p";
 import { miltyeq5p } from "./miltyeq5p";
 import { miltyeq7p } from "./miltyeq7p";
@@ -22,6 +28,12 @@ import { DraftConfig, DraftType } from "./types";
  * The configuration for each draft type.
  */
 export const draftConfig: Record<DraftType, DraftConfig> = {
+  heisen3p,
+  heisen3phyperlane,
+  milty3p,
+  milty3phyperlane,
+  miltyeq3p,
+  miltyeq3phyperlane,
   miltyeq,
   miltyeq5p,
   miltyeq4p,

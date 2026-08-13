@@ -168,6 +168,8 @@ type DraftSetupStore = {
 
 export const useDraftSetup = create<DraftSetupStore>()(
   immer((set, get) => {
+    const isBaseOnlyPlayerCount = (playerCount: number) => playerCount === 3;
+
     const getCurrentTileGameSets = (state: DraftSetupStore): GameSet[] => {
       if (state.draftMode === "twilightFalls") {
         return ["base", "pok", "te"];
@@ -217,6 +219,12 @@ export const useDraftSetup = create<DraftSetupStore>()(
 
       setDraftMode: (mode: DraftMode) =>
         setAndValidate((state) => {
+          const playerCount = state.player.players.length;
+          if (isBaseOnlyPlayerCount(playerCount) && mode !== "base") {
+            state.draftMode = "base";
+            return;
+          }
+
           state.draftMode = mode;
 
           // When switching to Twilight's Fall, set reference card packs to player count
@@ -232,6 +240,10 @@ export const useDraftSetup = create<DraftSetupStore>()(
       validateSetup: () => {
         set((state) => {
           const playerCount = state.player.players.length;
+
+          if (isBaseOnlyPlayerCount(playerCount) && state.draftMode !== "base") {
+            state.draftMode = "base";
+          }
 
           if (state.slices.numSlices < playerCount) {
             state.slices.numSlices = playerCount;

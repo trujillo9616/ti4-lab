@@ -52,6 +52,18 @@ const NUCLEUS_DESCRIPTION: DraftFormatDescriptionData = {
   ],
 };
 
+const HYPERLANE_DESCRIPTION: DraftFormatDescriptionData = {
+  tagline: "Hyperlane Variant",
+  description:
+    "A 3-player topology that uses hyperlanes to tighten the galaxy and keep contested space active. Shared center systems stay relevant without leaving dead wedges on the map.",
+  features: [
+    { icon: "slices", label: "3-player layout" },
+    { icon: "wormholes", label: "Preset hyperlanes" },
+    { icon: "balanced", label: "Shared center pressure" },
+    { icon: "equidistant", label: "Explicit border systems" },
+  ],
+};
+
 export const MAPS: Record<ChoosableDraftType, PrechoiceMap> = {
   milty: {
     title: "Milty",
@@ -61,6 +73,60 @@ export const MAPS: Record<ChoosableDraftType, PrechoiceMap> = {
     map: hydrateDemoMap(draftConfig.milty),
     titles: ["Speaker", "2nd", "3rd", "4th", "5th", "6th"],
     playerCount: 6,
+  },
+  milty3p: {
+    title: "Milty 3p",
+    description:
+      "A 3-player Milty draft on a dedicated ring-3 topology. Slices include their contested border tile, with extra shared map systems keeping the center interactive.",
+    descriptionData: MILTY_DESCRIPTION,
+    map: hydrateDemoMap(draftConfig.milty3p),
+    titles: ["Speaker", "2nd", "3rd"],
+    playerCount: 3,
+  },
+  milty3phyperlane: {
+    title: "Milty 3p Hyperlane",
+    description:
+      "A 3-player Milty draft on the hyperlane topology you provided. Slices keep their border tile while hyperlanes compress empty wedges and keep the galaxy connected.",
+    descriptionData: HYPERLANE_DESCRIPTION,
+    map: hydrateDemoMap(draftConfig.milty3phyperlane),
+    titles: ["Speaker", "2nd", "3rd"],
+    playerCount: 3,
+  },
+  miltyeq3p: {
+    title: "Milty EQ 3p",
+    description:
+      "A 3-player Milty EQ draft on the dedicated ring-3 topology. Equidistant-style shared systems sit on the map instead of inside slices, creating a cleaner border draft.",
+    descriptionData: MILTYEQ_DESCRIPTION,
+    map: hydrateDemoMap(draftConfig.miltyeq3p),
+    titles: ["Speaker", "2nd", "3rd"],
+    playerCount: 3,
+  },
+  miltyeq3phyperlane: {
+    title: "Milty EQ 3p Hyperlane",
+    description:
+      "A 3-player Milty EQ draft on the hyperlane topology you provided. Hyperlanes compress the map while shared border systems stay on the board instead of in slices.",
+    descriptionData: HYPERLANE_DESCRIPTION,
+    map: hydrateDemoMap(draftConfig.miltyeq3phyperlane),
+    titles: ["Speaker", "2nd", "3rd"],
+    playerCount: 3,
+  },
+  heisen3p: {
+    title: "Nucleus 3p",
+    description:
+      "A 3-player Nucleus draft on the ring-3 topology. Each player drafts only the 3 systems adjacent to home while the center and wedge systems stay shared for map-building play.",
+    descriptionData: NUCLEUS_DESCRIPTION,
+    map: hydrateDemoMap(draftConfig.heisen3p),
+    titles: ["P1", "P2", "P3"],
+    playerCount: 3,
+  },
+  heisen3phyperlane: {
+    title: "Nucleus 3p Hyperlane",
+    description:
+      "A 3-player Nucleus draft on the hyperlane topology. Players draft the 3 adjacent home systems while hyperlanes keep the shared center connected and contested.",
+    descriptionData: HYPERLANE_DESCRIPTION,
+    map: hydrateDemoMap(draftConfig.heisen3phyperlane),
+    titles: ["P1", "P2", "P3"],
+    playerCount: 3,
   },
   milty4p: {
     title: "Milty 4p",
@@ -203,6 +269,8 @@ export const MAPS: Record<ChoosableDraftType, PrechoiceMap> = {
 
 export const isMiltyVariant = (mapType: ChoosableDraftType) =>
   mapType === "milty" ||
+  mapType === "milty3p" ||
+  mapType === "milty3phyperlane" ||
   mapType === "milty4p" ||
   mapType === "milty5p" ||
   mapType === "milty7p" ||
@@ -210,6 +278,8 @@ export const isMiltyVariant = (mapType: ChoosableDraftType) =>
 
 export const isMiltyEqVariant = (mapType: ChoosableDraftType) =>
   mapType === "miltyeq" ||
+  mapType === "miltyeq3p" ||
+  mapType === "miltyeq3phyperlane" ||
   mapType === "miltyeq4p" ||
   mapType === "miltyeq5p" ||
   mapType === "miltyeq7p" ||
