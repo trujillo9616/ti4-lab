@@ -11,10 +11,9 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { IconBrandDiscordFilled } from "@tabler/icons-react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useState } from "react";
 import { Logo } from "~/components/Logo";
-import { trackButtonClick } from "~/lib/analytics.client";
 import classes from "./MainAppShell.module.css";
 
 const DISCORD_INVITE_URL = "https://discord.gg/2ezSTQpAVC";
@@ -82,22 +81,10 @@ function NavItem({
 
 export function MainAppShell({ children, headerRightSection }: Props) {
   const [mobileMenuOpened, setMobileMenuOpened] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
   const isMapPresetsActive = location.pathname === "/map-presets";
   const isAboutActive = location.pathname === "/about";
-  const isSoundboardActive = location.pathname === "/voices";
   const isMapGeneratorActive = location.pathname === "/map-generator";
-
-  const handleSoundboardClick = () => {
-    trackButtonClick({
-      buttonType: "load_soundboard",
-      context: "main_app_shell",
-    });
-
-    navigate("/voices");
-    setMobileMenuOpened(false);
-  };
 
   const menuItems = [
     {
@@ -121,12 +108,6 @@ export function MainAppShell({ children, headerRightSection }: Props) {
           mobile={mobile}
         />
       ))}
-      <NavItem
-        label="Soundboard"
-        isActive={isSoundboardActive}
-        onClick={handleSoundboardClick}
-        mobile={mobile}
-      />
     </>
   );
 

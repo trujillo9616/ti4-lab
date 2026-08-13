@@ -152,6 +152,7 @@ export type DraftConfig = {
     | {
         map: Map;
         slices: SystemIds[];
+        valid: boolean;
       }
     | undefined;
 

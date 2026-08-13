@@ -97,7 +97,6 @@ module.exports = {
     {
       files: [
         "server.ts",
-        "sync-voices-wrangler.js",
         "scripts/**/*.{js,ts}",
         "**/*.server.{js,jsx,ts,tsx}",
       ],

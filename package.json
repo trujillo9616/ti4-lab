@@ -14,8 +14,7 @@
     "db:backup": "flyctl ssh sftp get -a ti4-lab /data/sqlite.db ~/Downloads/ti4-lab_$(date +'%d_%m_%Y').db",
     "db:repair-preset-closed-tiles": "tsx ./scripts/repair-preset-closed-tiles.ts",
     "typecheck": "react-router typegen && tsc",
-    "test": "vitest",
-    "sync-voices": "node sync-voices-wrangler.js"
+    "test": "vitest"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.914.0",
@@ -29,7 +28,6 @@
     "@react-router/node": "^7.11.0",
     "@tabler/icons-react": "^3.36.1",
     "@tanstack/react-table": "^8.21.3",
-    "@types/howler": "^2.2.12",
     "better-sqlite3": "^12.11.1",
     "clsx": "^2.1.1",
     "cross-env": "^7.0.3",
@@ -37,12 +35,10 @@
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.30.10",
     "express": "^5.2.1",
-    "howler": "^2.2.4",
     "immer": "^10.1.1",
     "isbot": "^4.1.0",
     "jotai": "^2.8.3",
     "jotai-zustand": "^0.4.0",
-    "music-metadata-browser": "^2.5.11",
     "posthog-js": "^1.249.0",
     "prom-client": "^15.1.3",
     "querystring": "^0.2.1",

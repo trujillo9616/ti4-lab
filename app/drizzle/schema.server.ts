@@ -123,13 +123,6 @@ export const multiDrafts = sqliteTable(
   }),
 );
 
-export const soundboardSession = sqliteTable("soundboardSession", {
-  id: text("id").primaryKey(),
-  createdAt: text("createdAt")
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-});
-
 export const presetMaps = sqliteTable(
   "presetMaps",
   {
