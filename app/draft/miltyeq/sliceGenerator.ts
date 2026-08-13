@@ -18,7 +18,6 @@ import { systemData } from "~/data/systemData";
 import { generateEmptyMap } from "~/utils/map";
 import { calculateSliceValue, getSliceValueConfig } from "~/stats";
 import {
-  coreGenerateMap,
   coreGenerateMapForConfig,
   coreGenerateSlices,
   postProcessSlices,
