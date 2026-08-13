@@ -11,16 +11,21 @@ permissions:
   contents: read
 
 jobs:
-  checks:
+  ci:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        command:
-          - lint
-          - typecheck
-          - build
-          - test:ci
+        include:
+          - name: Lint
+            command: lint
+          - name: Typecheck
+            command: typecheck
+          - name: Build
+            command: build
+          - name: Test
+            command: test:ci
 
     steps:
       - name: Checkout

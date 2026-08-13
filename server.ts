@@ -45,12 +45,14 @@ app.use(
   viteDevServer ? viteDevServer.middlewares : express.static("build/client"),
 );
 
+const getProductionBuildPath = () => "./build/server/index.js";
+
 const build: ServerBuild | (() => Promise<ServerBuild>) = viteDevServer
   ? async () =>
       (await viteDevServer.ssrLoadModule(
         "virtual:react-router/server-build",
       )) as ServerBuild
-  : ((await import("./build/server/index.js")) as unknown as ServerBuild);
+  : ((await import(getProductionBuildPath())) as ServerBuild);
 
 app.all("/{*splat}", createRequestHandler({ build }));
 
