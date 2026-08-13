@@ -1,6 +1,20 @@
 import { DraftConfig } from "../types";
-import { generateSlices, generateMap } from "../miltyeq/sliceGenerator";
+import { generateMapForConfig, generateSlices } from "../miltyeq/sliceGenerator";
 import { rotateSlice } from "~/utils/hexagonal";
+
+const generateMiltyeq4pMap: NonNullable<DraftConfig["generateMap"]> = (
+  settings,
+  systemPool,
+  minorFactionPool,
+) => {
+  return generateMapForConfig(
+    miltyeq4p,
+    generateSlices,
+    settings,
+    systemPool,
+    minorFactionPool,
+  );
+};
 
 const slice: [number, number][] = [
   [1, 0],
@@ -88,6 +102,6 @@ export const miltyeq4p: DraftConfig = {
     ],
     3: rotateSlice(slice, 1),
   } as Record<number, [number, number][]>,
-  generateMap,
+  generateMap: generateMiltyeq4pMap,
   generateSlices,
 };

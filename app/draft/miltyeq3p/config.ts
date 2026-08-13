@@ -1,7 +1,6 @@
 import { rotateSlice } from "~/utils/hexagonal";
 import { DraftConfig } from "../types";
-import { generateMap } from "../miltyeq/sliceGenerator";
-import { generateSlices } from "../miltyeq/sliceGenerator";
+import { generateMapForConfig, generateSlices } from "../miltyeq/sliceGenerator";
 import {
   THREE_PLAYER_CLOSED_POSITIONS,
   THREE_PLAYER_EQ_MINOR_FACTION_POSITIONS,
@@ -10,10 +9,24 @@ import {
   THREE_PLAYER_STANDARD_EQ_MAP_TILES,
 } from "../common/threePlayer";
 
+const generateMiltyeq3pMap: NonNullable<DraftConfig["generateMap"]> = (
+  settings,
+  systemPool,
+  minorFactionPool,
+) => {
+  return generateMapForConfig(
+    miltyeq3p,
+    generateSlices,
+    settings,
+    systemPool,
+    minorFactionPool,
+  );
+};
+
 export const miltyeq3p: DraftConfig = {
   numPlayers: 3,
   type: "miltyeq3p",
-  minorFactionsEqPositions: THREE_PLAYER_EQ_MINOR_FACTION_POSITIONS,
+  minorFactionsEqPositions: [...THREE_PLAYER_EQ_MINOR_FACTION_POSITIONS],
   numSystemsInSlice: 4,
   mecatolPathSystemIndices: [1, 3],
   sliceHeight: 3,
@@ -34,6 +47,6 @@ export const miltyeq3p: DraftConfig = {
     1: rotateSlice(THREE_PLAYER_MILTY_EQ_SLICE, 2),
     2: rotateSlice(THREE_PLAYER_MILTY_EQ_SLICE, 4),
   } as Record<number, [number, number][]>,
-  generateMap,
+  generateMap: generateMiltyeq3pMap,
   generateSlices,
 };

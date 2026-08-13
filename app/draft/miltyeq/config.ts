@@ -1,6 +1,20 @@
 import { DraftConfig } from "../types";
-import { generateMap, generateSlices } from "./sliceGenerator";
+import { generateMapForConfig, generateSlices } from "./sliceGenerator";
 import { STANDARD_6P_HOME_POSITIONS } from "~/utils/mapGenerator";
+
+const generateMiltyeqMap: NonNullable<DraftConfig["generateMap"]> = (
+  settings,
+  systemPool,
+  minorFactionPool,
+) => {
+  return generateMapForConfig(
+    miltyeq,
+    generateSlices,
+    settings,
+    systemPool,
+    minorFactionPool,
+  );
+};
 
 export const miltyeq: DraftConfig = {
   numPlayers: 6,
@@ -59,6 +73,6 @@ export const miltyeq: DraftConfig = {
       [2, 0],
     ],
   } as Record<number, [number, number][]>,
-  generateMap,
+  generateMap: generateMiltyeqMap,
   generateSlices,
 };

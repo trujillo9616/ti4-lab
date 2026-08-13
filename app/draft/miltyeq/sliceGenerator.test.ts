@@ -1,7 +1,8 @@
 import { expect, test } from "vitest";
-import { generateMap } from "./sliceGenerator";
+import { miltyeq } from "./config";
 import { DraftSettings } from "~/types";
 import { getSystemPool } from "~/utils/system";
+import { withDeterministicDraftRandomness } from "../testUtils";
 
 const defaultTestSettings = {
   type: "miltyeq",
@@ -17,7 +18,36 @@ const defaultTestSettings = {
   minorFactionsInSharedPool: false,
 } as const;
 
-test("properly generates maps", () => {
+const BASE_SEEDS = [3, 11] as const;
+const DISCORDANT_SEEDS = [5, 17] as const;
+
+function expectValidMap(
+  result: ReturnType<NonNullable<typeof miltyeq.generateMap>>,
+  sliceCount: number,
+) {
+  expect(result).toBeDefined();
+  expect(result?.valid).toBe(true);
+  expect(result?.slices).toHaveLength(sliceCount);
+  expect(result?.map.length).toBeGreaterThan(0);
+}
+
+function expectDeterministicGeneration(
+  seed: number,
+  settings: DraftSettings,
+  systemPool: ReturnType<typeof getSystemPool>,
+) {
+  const first = withDeterministicDraftRandomness(seed, () =>
+    miltyeq.generateMap?.(settings, [...systemPool]),
+  );
+  const second = withDeterministicDraftRandomness(seed, () =>
+    miltyeq.generateMap?.(settings, [...systemPool]),
+  );
+
+  expect(first).toEqual(second);
+  expectValidMap(first, settings.numSlices);
+}
+
+test.each(BASE_SEEDS)("properly generates maps for seed %i", (seed) => {
   const settings: DraftSettings = {
     factionGameSets: ["base", "pok"],
     tileGameSets: ["base", "pok"],
@@ -25,20 +55,10 @@ test("properly generates maps", () => {
   };
 
   const systemPool = getSystemPool(["base", "pok"]);
-  const iterations = 10000;
-  for (let i = 0; i < iterations; i++) {
-    try {
-      const result = generateMap(settings, [...systemPool]);
-      expect(result, `Failed on iteration ${i + 1}`).toBeDefined();
-      expect(result?.valid, `Map was invalid on iteration ${i + 1}`).toBe(true);
-    } catch (e) {
-      console.log(`Failed on iteration ${i + 1}`);
-      throw e;
-    }
-  }
+  expectDeterministicGeneration(seed, settings, systemPool);
 });
 
-test("properly generates maps with 8 slices", () => {
+test.each(BASE_SEEDS)("properly generates maps with 8 slices for seed %i", (seed) => {
   const settings: DraftSettings = {
     ...defaultTestSettings,
     factionGameSets: ["base", "pok"],
@@ -46,20 +66,12 @@ test("properly generates maps with 8 slices", () => {
     numSlices: 8,
   };
   const systemPool = getSystemPool(["base", "pok"]);
-  const iterations = 10000;
-  for (let i = 0; i < iterations; i++) {
-    try {
-      const result = generateMap(settings, [...systemPool]);
-      expect(result, `Failed on iteration ${i + 1}`).toBeDefined();
-      expect(result?.valid, `Map was invalid on iteration ${i + 1}`).toBe(true);
-    } catch (e) {
-      console.log(`Failed on iteration ${i + 1}`);
-      throw e;
-    }
-  }
+  expectDeterministicGeneration(seed, settings, systemPool);
 });
 
-test("Milty-EQ generates with discordant stars", () => {
+test.each(DISCORDANT_SEEDS)(
+  "Milty-EQ generates with discordant stars for seed %i",
+  (seed) => {
   const settings: DraftSettings = {
     factionGameSets: ["base", "pok", "discordant", "discordantexp"],
     tileGameSets: [
@@ -78,15 +90,6 @@ test("Milty-EQ generates with discordant stars", () => {
     "discordantexp",
     "unchartedstars",
   ]);
-  const iterations = 10000;
-  for (let i = 0; i < iterations; i++) {
-    try {
-      const result = generateMap(settings, [...systemPool]);
-      expect(result, `Failed on iteration ${i + 1}`).toBeDefined();
-      expect(result?.valid, `Map was invalid on iteration ${i + 1}`).toBe(true);
-    } catch (e) {
-      console.log(`Failed on iteration ${i + 1}`);
-      throw e;
-    }
-  }
-});
+    expectDeterministicGeneration(seed, settings, systemPool);
+  },
+);

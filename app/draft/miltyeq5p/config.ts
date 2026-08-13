@@ -1,5 +1,19 @@
 import { DraftConfig } from "../types";
-import { generateSlices, generateMap } from "../miltyeq/sliceGenerator";
+import { generateMapForConfig, generateSlices } from "../miltyeq/sliceGenerator";
+
+const generateMiltyeq5pMap: NonNullable<DraftConfig["generateMap"]> = (
+  settings,
+  systemPool,
+  minorFactionPool,
+) => {
+  return generateMapForConfig(
+    miltyeq5p,
+    generateSlices,
+    settings,
+    systemPool,
+    minorFactionPool,
+  );
+};
 
 export const miltyeq5p: DraftConfig = {
   numPlayers: 5,
@@ -59,6 +73,6 @@ export const miltyeq5p: DraftConfig = {
       [2, 0],
     ],
   } as Record<number, [number, number][]>,
-  generateMap,
+  generateMap: generateMiltyeq5pMap,
   generateSlices,
 };

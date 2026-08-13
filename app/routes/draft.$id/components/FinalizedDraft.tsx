@@ -20,7 +20,6 @@ import {
   IconShare,
   IconPlayerPlay,
   IconArrowBackUp,
-  IconMicrophone2,
 } from "@tabler/icons-react";
 import { useDraft } from "~/draftStore";
 import { Section, SectionTitle } from "~/components/Section";
@@ -40,7 +39,6 @@ import { useAtom } from "jotai";
 import { useSyncDraft } from "~/hooks/useSyncDraft";
 import { PlanetFinder } from "./PlanetFinder";
 import { useSafeOutletContext } from "~/useSafeOutletContext";
-import { trackButtonClick } from "~/lib/analytics.client";
 import { LabArtToggleButton } from "~/components/LabArtToggleButton";
 import { StartingUnitsTable } from "~/components/StartingUnitsTable";
 import { FactionIcon } from "~/components/icons/FactionIcon";
@@ -82,21 +80,6 @@ export function FinalizedDraft() {
     useState<ExternalMapStringFormat>("ttpg");
   const mapString = mapStrings[mapStringFormat];
 
-  const handleSoundboardClick = () => {
-    const factionIds = hydratedPlayers
-      .map((p) => p.faction)
-      .filter(Boolean)
-      .join(",");
-
-    // Track button click with PostHog
-    trackButtonClick({
-      buttonType: "load_soundboard",
-      context: "finalized_draft",
-    });
-
-    navigate(`/voices?factions=${factionIds}`);
-  };
-
   return (
     <Stack mt="lg" gap="xl">
       <PlanetFinder onSystemSelected={syncDraft} />
@@ -115,15 +98,6 @@ export function FinalizedDraft() {
                 Share Image
               </Button>
             </Anchor>
-            <Button
-              size="md"
-              variant="light"
-              color="orange"
-              leftSection={<IconMicrophone2 size={18} />}
-              onClick={handleSoundboardClick}
-            >
-              Soundboard
-            </Button>
           </Group>
         </Group>
 

@@ -45,12 +45,14 @@ app.use(
   viteDevServer ? viteDevServer.middlewares : express.static("build/client"),
 );
 
+const getProductionBuildPath = () => "./build/server/index.js";
+
 const build: ServerBuild | (() => Promise<ServerBuild>) = viteDevServer
   ? async () =>
       (await viteDevServer.ssrLoadModule(
         "virtual:react-router/server-build",
       )) as ServerBuild
-  : ((await import("./build/server/index.js")) as unknown as ServerBuild);
+  : ((await import(getProductionBuildPath())) as ServerBuild);
 
 app.all("/{*splat}", createRequestHandler({ build }));
 
@@ -82,72 +84,6 @@ io.on("connection", (socket) => {
         socket.join("draft:" + draftId);
       },
       draftId,
-    );
-  });
-
-  socket.on("joinSoundboardSession", (sessionId) => {
-    observeSocketEvent(
-      "joinSoundboardSession",
-      (sessionId) => {
-        console.log(socket.id, "joined soundboard session", sessionId);
-        socket.join("soundboard:" + sessionId);
-      },
-      sessionId,
-    );
-  });
-
-  socket.on("requestSessionData", (sessionId) => {
-    observeSocketEvent(
-      "requestSessionData",
-      (sessionId) => {
-        socket.to("soundboard:" + sessionId).emit("requestSessionData");
-      },
-      sessionId,
-    );
-  });
-
-  socket.on("sendSessionData", (sessionId, data) => {
-    observeSocketEvent(
-      "sendSessionData",
-      (sessionId, data) => {
-        socket.to("soundboard:" + sessionId).emit("sendSessionData", data);
-      },
-      sessionId,
-      data,
-    );
-  });
-
-  socket.on("stopLine", (sessionId) => {
-    observeSocketEvent(
-      "stopLine",
-      (sessionId) => {
-        socket.to("soundboard:" + sessionId).emit("stopLine");
-      },
-      sessionId,
-    );
-  });
-
-  socket.on("lineFinished", (sessionId) => {
-    observeSocketEvent(
-      "lineFinished",
-      (sessionId) => {
-        socket.to("soundboard:" + sessionId).emit("lineFinished");
-      },
-      sessionId,
-    );
-  });
-
-  socket.on("playLine", (sessionId, factionId, lineType) => {
-    observeSocketEvent(
-      "playLine",
-      (sessionId, factionId, lineType) => {
-        socket
-          .to("soundboard:" + sessionId)
-          .emit("playLine", factionId, lineType);
-      },
-      sessionId,
-      factionId,
-      lineType,
     );
   });
 

@@ -1,7 +1,12 @@
 import { DraftSettings, SystemId, SystemIds, FactionId } from "~/types";
 import { SLICE_SHAPES } from "../sliceShapes";
 import { miltySystemTiers } from "~/data/miltyTileTiers";
-import { SliceChoice, SliceGenerationConfig, TieredSystems } from "../types";
+import {
+  DraftConfig,
+  SliceChoice,
+  SliceGenerationConfig,
+  TieredSystems,
+} from "../types";
 import { shuffle, weightedChoice } from "../helpers/randomization";
 import {
   filterTieredSystems,
@@ -13,12 +18,11 @@ import { systemData } from "~/data/systemData";
 import { generateEmptyMap } from "~/utils/map";
 import { calculateSliceValue, getSliceValueConfig } from "~/stats";
 import {
-  coreGenerateMap,
+  coreGenerateMapForConfig,
   coreGenerateSlices,
   postProcessSlices,
 } from "../common/sliceGenerator";
 import { DEFAULT_SLICE_SETTINGS } from "~/components/SliceSettingsModal";
-import { draftConfig } from "../draftConfig";
 import { getFactionPool } from "~/utils/factions";
 import { mapStringOrder } from "~/data/mapStringOrder";
 
@@ -45,14 +49,14 @@ const MINOR_FACTION_SLICE_CHOICES: SliceChoice[] = [
 
 const DEFAULT_CONFIG = DEFAULT_SLICE_SETTINGS.miltyeq;
 
-export const generateMap = (
+export const generateMapForConfig = (
+  config: DraftConfig,
+  generateSlicesFn: DraftConfig["generateSlices"],
   settings: DraftSettings,
   systemPool: SystemId[],
   minorFactionPool?: FactionId[],
   attempts: number = 0,
 ) => {
-  const config = draftConfig[settings.type];
-  const generateSlicesFn = config.generateSlices;
   const minorFactionsMode = settings.minorFactionsMode;
   if (
     minorFactionsMode?.mode === "sharedPool" ||
@@ -110,7 +114,13 @@ export const generateMap = (
     };
   }
 
-  return coreGenerateMap(settings, systemPool, attempts, generateSlicesFn);
+  return coreGenerateMapForConfig(
+    config,
+    settings,
+    systemPool,
+    attempts,
+    generateSlicesFn,
+  );
 };
 
 const validateSlice = (slice: SystemIds, config: SliceGenerationConfig) => {

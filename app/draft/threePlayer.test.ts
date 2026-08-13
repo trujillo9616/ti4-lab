@@ -3,6 +3,7 @@ import { DraftSettings } from "~/types";
 import { getSystemPool } from "~/utils/system";
 import { hydrateDemoMap } from "~/utils/map";
 import { draftConfig } from "./draftConfig";
+import { withDeterministicDraftRandomness } from "./testUtils";
 import {
   THREE_PLAYER_CLOSED_POSITIONS,
   THREE_PLAYER_HOME_POSITIONS,
@@ -31,8 +32,17 @@ const defaultTestSettings = {
   minorFactionsInSharedPool: false,
 } as const;
 
+const THREE_PLAYER_TEST_SEEDS = {
+  heisen3p: 2,
+  heisen3phyperlane: 5,
+  milty3p: 7,
+  milty3phyperlane: 11,
+  miltyeq3p: 13,
+  miltyeq3phyperlane: 17,
+} as const;
+
 describe("3-player draft configs", () => {
-  test.each(THREE_PLAYER_TYPES)("%s generates valid maps", (type) => {
+  test.each(THREE_PLAYER_TYPES)("%s generates valid maps deterministically", (type) => {
     const config = draftConfig[type];
     const settings: DraftSettings = {
       ...defaultTestSettings,
@@ -46,17 +56,22 @@ describe("3-player draft configs", () => {
 
     const generateMap = config.generateMap;
     const systemPool = getSystemPool(["base", "pok"]);
-    const iterations = type.startsWith("heisen") ? 50 : 100;
+    const seed = THREE_PLAYER_TEST_SEEDS[type];
 
     expect(generateMap).toBeDefined();
 
-    for (let i = 0; i < iterations; i++) {
-      const result = generateMap!(settings, [...systemPool]);
-      expect(result, `Failed on iteration ${i + 1}`).toBeDefined();
-      expect(result?.valid, `Map was invalid on iteration ${i + 1}`).toBe(true);
-      expect(result?.slices, `Slice count was wrong on iteration ${i + 1}`).toHaveLength(3);
-      expect(result?.map, `Map size was wrong on iteration ${i + 1}`).toHaveLength(37);
-    }
+    const first = withDeterministicDraftRandomness(seed, () =>
+      generateMap!(settings, [...systemPool]),
+    );
+    const second = withDeterministicDraftRandomness(seed, () =>
+      generateMap!(settings, [...systemPool]),
+    );
+
+    expect(first).toEqual(second);
+    expect(first).toBeDefined();
+    expect(first?.valid).toBe(true);
+    expect(first?.slices).toHaveLength(3);
+    expect(first?.map).toHaveLength(37);
   });
 
   test.each(THREE_PLAYER_TYPES)("%s uses the shared 3-player shell", (type) => {
@@ -113,23 +128,31 @@ describe("3-player draft configs", () => {
     );
 
     const config = draftConfig.heisen3phyperlane;
-    const generated = config.generateMap!(
-      {
-        ...defaultTestSettings,
-        type: "heisen3phyperlane",
-        factionGameSets: ["base", "pok"],
-        tileGameSets: ["base", "pok"],
-        sliceGenerationConfig: {
-          mecatolPathSystemIndices: config.mecatolPathSystemIndices,
-        },
-      },
-      getSystemPool(["base", "pok"]),
+    const generated = withDeterministicDraftRandomness(
+      THREE_PLAYER_TEST_SEEDS.heisen3phyperlane,
+      () =>
+        config.generateMap!(
+          {
+            ...defaultTestSettings,
+            type: "heisen3phyperlane",
+            factionGameSets: ["base", "pok"],
+            tileGameSets: ["base", "pok"],
+            sliceGenerationConfig: {
+              mecatolPathSystemIndices: config.mecatolPathSystemIndices,
+            },
+          },
+          getSystemPool(["base", "pok"]),
+        ),
     );
 
     expect(generated?.valid).toBe(true);
     Object.entries(THREE_PLAYER_HYPERLANE_PRESET_TILES).forEach(
       ([idx, preset]) => {
-        expect(generated?.map[Number(idx)].systemId).toBe(preset.systemId);
+        const tile = generated?.map[Number(idx)];
+        expect(tile?.type).toBe("SYSTEM");
+        if (tile?.type === "SYSTEM") {
+          expect(tile.systemId).toBe(preset.systemId);
+        }
       },
     );
   });

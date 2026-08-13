@@ -140,7 +140,30 @@ export function coreGenerateMap(
   ) => SystemIds[] | undefined,
   minorFactionPool?: FactionId[],
 ) {
-  const config = draftConfig[settings.type];
+  return coreGenerateMapForConfig(
+    draftConfig[settings.type],
+    settings,
+    systemPool,
+    attempts,
+    generateSlices,
+    minorFactionPool,
+  );
+}
+
+export function coreGenerateMapForConfig(
+  config: DraftConfig,
+  settings: DraftSettings,
+  systemPool: SystemId[],
+  attempts: number = 0,
+  generateSlices: (
+    sliceCount: number,
+    availableSystems: SystemId[],
+    config?: SliceGenerationConfig,
+    sliceShape?: string[],
+    minorFactionPool?: FactionId[],
+  ) => SystemIds[] | undefined,
+  minorFactionPool?: FactionId[],
+) {
   const map = generateEmptyMap(config);
   const numMapTiles = config.modifiableMapTiles.length;
   const slices = generateSlices(settings.numSlices, systemPool, {
@@ -150,7 +173,8 @@ export function coreGenerateMap(
 
   if (!slices) {
     if (attempts > 1000) return undefined;
-    return coreGenerateMap(
+    return coreGenerateMapForConfig(
+      config,
       settings,
       systemPool,
       attempts + 1,
@@ -177,7 +201,8 @@ export function coreGenerateMap(
   // if we have gone past max attempts, return the map regardless of validation
   if (attempts > 1000) return { map, slices, valid: false };
   if (!validateMap(config, settings, map, slices)) {
-    return coreGenerateMap(
+    return coreGenerateMapForConfig(
+      config,
       settings,
       systemPool,
       attempts + 1,
